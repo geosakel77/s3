@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RDFAndSPARQL.SPARQLEndpointProjectPersistentStateComponent">
+    <option name="fileBasedConfigs">
+      <map>
+        <entry key="77cd6dca-f8d5-4420-9015-d20928323de2">
+          <value>
+            <SPARQLEndpointFileBasedConfig>
+              <option name="endpointId" value="77cd6dca-f8d5-4420-9015-d20928323de2" />
+              <option name="paths">
+                <list>
+                  <option value="dataset\nace\" />
+                </list>
+              </option>
+            </SPARQLEndpointFileBasedConfig>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

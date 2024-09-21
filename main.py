@@ -1,16 +1,26 @@
-# This is a sample Python script.
+from http.client import responses
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from stix2validator.v21.musts import process
+
+from config import read_config
+from s3lib import OpenCTIClient, OpenAIClient,OntologyFIBOClient
+CONFIG = read_config()
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def run():
+    CONFIG = read_config()
+    #client = OpenCTIClient(CONFIG['api_url'], CONFIG['api_key'])
+    #print(client.get_malware())
+    ontoclient = OntologyFIBOClient(CONFIG)
+    print(ontoclient.get_individuals())
+    #openai_client =   OpenAIClient()
+    #message="Give me an example of a business plan."
+    #response= openai_client.call_openai(message)
+    #print(response)
+    #print(type(response))
+
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    run()
