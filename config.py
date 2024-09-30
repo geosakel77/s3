@@ -29,6 +29,11 @@ def read_config(filepath="config.ini"):
 	nace_entry= config.get('ontology', 'nace_entry')
 	skos_entry= config.get('ontology', 'skos_entry')
 	dcat_entry= config.get('ontology', 'dcat_entry')
+	nace_json = config.get('ontology', 'nace_json')
+	gpo_path= config.get('ontology', 'gpo_path')
+	gpo_entry= config.get('ontology', 'gpo_entry')
+	companies_entry= config.get('dataset', 'companies_path')
+	cpe_path= config.get('dataset', 'cpe_path')
 	# Return a dictionary with the retrieved values
 	config_values = {
 		'debug_mode': debug_mode,
@@ -46,7 +51,12 @@ def read_config(filepath="config.ini"):
 		'nace_path': nace_path,
 		'nace_entry': nace_entry,
 		'skos_entry': skos_entry,
-		'dcat_entry': dcat_entry
+		'dcat_entry': dcat_entry,
+		'nace_json': nace_json,
+		'companies_path': companies_entry,
+		'gpo_path': gpo_path,
+		'gpo_entry': gpo_entry,
+		'cpe_path': cpe_path
 	}
 
 	return config_values
