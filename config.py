@@ -22,9 +22,9 @@ def read_config(filepath="config.ini"):
 	openai_project_id = config.get('openai', 'project_id')
 	openai_model= config.get('openai', 'model')
 	fibo_path= config.get('ontology', 'fibo_path')
-	fibo_entry= config.get('ontology', 'fibo_entry')
-	dit_path= config.get('ontology', 'dit_path')
-	dit_entry= config.get('ontology', 'dit_entry')
+	fibo_entry_funds= config.get('ontology', 'fibo_entry_funds')
+	fibo_entry_fps= config.get('ontology', 'fibo_entry_fps')
+	fibo_entry_loans= config.get('ontology', 'fibo_entry_loans')
 	nace_path= config.get('ontology', 'nace_path')
 	nace_entry= config.get('ontology', 'nace_entry')
 	skos_entry= config.get('ontology', 'skos_entry')
@@ -32,8 +32,13 @@ def read_config(filepath="config.ini"):
 	nace_json = config.get('ontology', 'nace_json')
 	gpo_path= config.get('ontology', 'gpo_path')
 	gpo_entry= config.get('ontology', 'gpo_entry')
+	eccf_entry= config.get('ontology', 'eccf_entry')
+	eccf_path= config.get('ontology', 'eccf_path')
 	companies_entry= config.get('dataset', 'companies_path')
 	cpe_path= config.get('dataset', 'cpe_path')
+	pto_path= config.get('ontology', 'pto_path')
+	pto_entry= config.get('ontology', 'pto_entry')
+	pto_json= config.get('ontology', 'pto_json')
 	# Return a dictionary with the retrieved values
 	config_values = {
 		'debug_mode': debug_mode,
@@ -45,9 +50,9 @@ def read_config(filepath="config.ini"):
 		'openai_project_id': openai_project_id,
 		'openai_model': openai_model,
 		'fibo_path': fibo_path,
-		'fibo_entry': fibo_entry,
-		'dit_path': dit_path,
-		'dit_entry': dit_entry,
+		'fibo_entry_funds': fibo_entry_funds,
+		'fibo_entry_fps': fibo_entry_fps,
+		'fibo_entry_loans': fibo_entry_loans,
 		'nace_path': nace_path,
 		'nace_entry': nace_entry,
 		'skos_entry': skos_entry,
@@ -56,7 +61,12 @@ def read_config(filepath="config.ini"):
 		'companies_path': companies_entry,
 		'gpo_path': gpo_path,
 		'gpo_entry': gpo_entry,
-		'cpe_path': cpe_path
+		'cpe_path': cpe_path,
+		'eccf_entry': eccf_entry,
+		'eccf_path': eccf_path,
+		'pto_path': pto_path,
+		'pto_entry': pto_entry,
+		'pto_json': pto_json
 	}
 
 	return config_values
