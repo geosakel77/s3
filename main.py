@@ -3,7 +3,7 @@ from http.client import responses
 from stix2validator.v21.musts import process
 
 from config import read_config
-from s3lib import OpenCTIClient, OpenAIClient, OntologyFIBOClient, CompaniesClient, OntologyNACEClient
+from s3lib.libclients import OpenCTIClient, OpenAIClient, OntologyFIBOClient, CompaniesClient, OntologyNACEClient
 
 CONFIG = read_config()
 

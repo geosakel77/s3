@@ -1,21 +1,11 @@
-import csv
-from fileinput import close
-from symtable import Class
-from typing import List, Dict, Any
+
+from typing import  Any
 from urllib.error import URLError
 
-from numpy.ma.extras import unique
 from numpy.random import PCG64, SeedSequence
-from rdflib.plugins.parsers.ntriples import uriref
-from stix2elevator.convert_stix import process_description_and_short_description_of_sighting
-from treelib import Node, Tree
-from netaddr.ip.iana import query
 from pycti import OpenCTIApiClient
-from datasketch import MinHash
-from pyexpat.errors import messages
-from regex import search
-from openai import OpenAI, api_key
-import json, os, csv, json
+from openai import OpenAI
+import json
 from owlready2 import *
 from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.sparql import prepareQuery
@@ -406,14 +396,25 @@ class CompaniesClient(CSVClient):
         self.data_keys = self.data.keys()
 
     def get_company(self, index):
-        print(self.data.keys())
         return self.data[index:index + 1]
 
-    def get_companies_sample(self, size, seed=0):
+    def get_companies_sample(self, size,industry="", seed=0):
         ss = SeedSequence(seed)
         state = PCG64(ss)
-        return self.data.sample(n=size, random_state=state)
+        if len(industry)>1:
+            returned_sample = self.data.loc[self.data['industry'].isin([industry])].sample(n=size,random_state=state)
+        else:
+            returned_sample=self.data.sample(n=size, random_state=state)
 
+        return returned_sample
+
+    def get_industries(self):
+        result= list(set(self.data['industry'].values.tolist()))
+        for r in result:
+            if type(r)==float:
+                result.pop(result.index(r))
+        result.sort()
+        return result
 
 class XMLClient(Client):
     def __init__(self, config, path_key):
@@ -652,13 +653,16 @@ class OntologyFIBOClient(Client):
         self.funds=OntologyClient(self.config,path_key,path_entry_funds_key)
         self.loans=OntologyClient(self.config,path_key,path_entry_loans_key)
         self.fps=OntologyClient(self.config,path_key,path_entry_fps_key)
+        self.funds_data = None
+        self.loans_data = None
+        self.fps_data = None
         self.get_data()
 
 
     def get_data(self):
-        self._get_funds()
-        self._get_loans()
-        self._get_fps()
+        self.funds_data=self._get_funds()
+        self.loans_data=self._get_loans()
+        self.fps_data=self._get_fps()
 
 
     def _get_loans(self):
@@ -762,7 +766,7 @@ class OntologyFIBOClient(Client):
             self.label = label
             self.properties_labels = []
             self.constraints = {}
-            self.subclasses = {}
+            self.subclasses = []
 
         def unique_values(self):
             self.properties_labels = list(set(self.properties_labels))

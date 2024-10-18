@@ -1,8 +1,8 @@
 import configparser
 
 import configparser
-
-from stix2validator.v21.musts import process
+from config.industries import INDUSTRIES
+from config.business_activities import BUSINESS_ACTIVITIES
 
 
 def read_config(filepath="config.ini"):
@@ -39,6 +39,22 @@ def read_config(filepath="config.ini"):
 	pto_path= config.get('ontology', 'pto_path')
 	pto_entry= config.get('ontology', 'pto_entry')
 	pto_json= config.get('ontology', 'pto_json')
+	c1=config.get('experiments','c1')
+	c2=config.get('experiments','c2')
+	c3=config.get('experiments','c3')
+	c4=config.get('experiments','c4')
+	c5=config.get('experiments','c5')
+	c6=config.get('experiments','c6')
+	c7=config.get('experiments','c7')
+	c8=config.get('experiments','c8')
+	c9=config.get('experiments','c9')
+	c10=config.get('experiments','c10')
+	landscape_lo=config.get('experiments', 'landscape_LO')
+	landscape_li=config.get('experiments', 'landscape_LI')
+	landscape_ltp=config.get('experiments', 'landscape_LTP')
+
+	industries_choice=INDUSTRIES
+	business_activities_choice=BUSINESS_ACTIVITIES
 	# Return a dictionary with the retrieved values
 	config_values = {
 		'debug_mode': debug_mode,
@@ -66,7 +82,23 @@ def read_config(filepath="config.ini"):
 		'eccf_path': eccf_path,
 		'pto_path': pto_path,
 		'pto_entry': pto_entry,
-		'pto_json': pto_json
+		'pto_json': pto_json,
+		'c1': c1,
+		'c2': c2,
+		'c3': c3,
+		'c4': c4,
+		'c5': c5,
+		'c6': c6,
+		'c7': c7,
+		'c8': c8,
+		'c9': c9,
+		'c10': c10,
+		'landscape_lo': landscape_lo,
+		'landscape_li': landscape_li,
+		'landscape_ltp': landscape_ltp,
+		'industries_choice': industries_choice,
+		'business_activities_choice': business_activities_choice,
+
 	}
 
 	return config_values
