@@ -248,7 +248,6 @@ class OntologyGPOClient(OntologyClient):
         subclasses=self._get_subclasses()
         ontology_data = self._ontology_classes_factory(labels, properties_labels, class_properties_constraints,subclasses)
         self.extracted_data = ontology_data
-        return ontology_data
 
     def _get_labels(self):
         sparql_query = """
@@ -520,11 +519,8 @@ class CPEClient(XMLClient):
                 values['other'] = None
             return values
 
-        def to_print(self):
-            print(self.name)
-            print(self.title)
-            print(self.references)
-            print(self.cpe23)
+        def to_tuple(self):
+            return self.name,self.title,self.references,self.cpe23
 
 
 class OntologyPTOClient(OntologyClient):

@@ -1,11 +1,11 @@
-import random
+import json
+import random,re
 from random import sample
-
 import pandas as pd
 
 from s3lib.libclients import OpenAIClient, OntologyFIBOClient, OntologyGPOClient, OntologyECCFClient, \
     OntologyNACEClient, \
-    CompaniesClient, CPEClient
+    CompaniesClient, CPEClient, OntologyPTOClient
 
 
 class Landscape:
@@ -73,10 +73,7 @@ class InputLandscape(Landscape):
         self.loans = None
         self.funds = None
         self.set_information_needs()
-        print(self.suppliers)
-        print(self.competitors)
-        print(self.loans)
-        print(self.funds)
+
 
     def _get_industries_choices(self, industries_choice):
         if type(industries_choice) == list and len(industries_choice) > 0:
@@ -222,7 +219,7 @@ class TransformationProcessLandscape(Landscape):
         super().__init__(config,params=params)
         self.nace = OntologyNACEClient(config)
         self.gpo = OntologyGPOClient(config)
-        #self.cpe = CPEClient(config)
+        self.cpe = CPEClient(config)
         self.business_activities_choice= self._get_business_activities_choice(self.parameters['business_activities_choice'])
         self.business_activities_size = self._get_business_activities_size(self.parameters['business_activities_size'],
                                                           self.business_activities_choice)
@@ -251,10 +248,10 @@ class TransformationProcessLandscape(Landscape):
         return final_size
 
     def set_information_needs(self):
-        self.business_activities=self._set_business_activities_information_needs()
-        self.internal_operations=self._set_internal_operations_information_needs()
-        #self.information_systems=self._set_information_systems_information_needs()
-        pass
+        #self.business_activities=self._set_business_activities_information_needs()
+        #self.internal_operations=self._set_internal_operations_information_needs()
+        self.information_systems=self._set_information_systems_information_needs()
+
 
 
     def _set_business_activities_information_needs(self):
@@ -268,11 +265,22 @@ class TransformationProcessLandscape(Landscape):
 
         chosen_business_activities=self._get_business_area_activities(nace_cleaned_data,business_activities_distribution)
 
-        #print(list(nace_cleaned_data.keys()))
-        #print(self._decomposition(self.business_activities_size,len(list(nace_cleaned_data.keys())),t=1))
+        business_activities_information_needs=self._create_business_activities_information_needs(chosen_business_activities)
+        return business_activities_information_needs
 
-        return chosen_business_activities
+    def _create_business_activities_information_needs(self,business_activities):
+        information_needs=[]
+        for ba in business_activities:
+            information_needs.extend(self._create_internal_operation_information_needs(ba))
+        return information_needs
 
+    def _create_business_activity_information_needs(self,business_activity):
+        response = []
+        message0 = f"What should I know about {business_activity[0]} with a description as {business_activity[1]}"
+        message1 = f"What cyber threats are related to {business_activity[0]}?"
+        response.append(self.openai.call_openai(message0))
+        response.append(self.openai.call_openai(message1))
+        return response
 
     def _get_business_area_activities(self,business_activities,activities_distribution):
         returned_data = []
@@ -316,17 +324,141 @@ class TransformationProcessLandscape(Landscape):
 
 
     def _set_internal_operations_information_needs(self):
-        gpo= self.gpo.get_data()
+        operations=self._get_internal_operations()
+        information_needs=self._create_internal_operations_information_needs(operations)
+        return information_needs
+
+
+    def _create_internal_operations_information_needs(self,operations):
+        information_needs=[]
+        for operation in operations:
+            information_needs.extend(self._create_internal_operation_information_needs(operation))
+        return information_needs
+
+    def _create_internal_operation_information_needs(self,operation):
+        response = []
+        message0 = f"What should I know about {operation[0]}?"
+        message1 = f"What cyber threats are related to {operation[1]}?"
+        response.append(self.openai.call_openai(message0))
+        response.append(self.openai.call_openai(message1))
+        return response
+
+    def _get_internal_operations(self):
+        gpo=self.gpo.get_data()
+        cleaned_operations=[]
         for e in gpo.keys():
-            print(gpo[e].to_tuple())
+            if 'Process' in gpo[e].label:
+                cleaned_operations.append(gpo[e].to_tuple())
+        sample_operations=random.sample(cleaned_operations,self.parameters['number_of_internal_operations'])
+        return sample_operations
 
 
     def _set_information_systems_information_needs(self):
-        pass
+        information_systems=self._get_information_systems()
+        information_needs=self._create_information_systems_information_needs(information_systems)
+        print(information_needs)
+        return information_needs
+
+    def _get_information_systems(self):
+        chosen_information_systems= random.sample(self.cpe.extracted_data,self.parameters['number_of_information_systems'])
+        return chosen_information_systems
+
+    def _create_information_systems_information_needs(self,information_systems):
+        information_needs=[]
+        for information_system in information_systems:
+            information_needs.extend(self._create_information_system_information_needs(information_system))
+        return information_needs
+
+    def _create_information_system_information_needs(self,information_system):
+        response = []
+        message0 = f"What should I know about {information_system.title}?"
+        message1 = f"What cyber threats are related to {information_system.title}?"
+        response.append(self.openai.call_openai(message0))
+        response.append(self.openai.call_openai(message1))
+        return response
+
 
 class OutputLandscape(Landscape):
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.fibo = OntologyFIBOClient(config)
+    def __init__(self, config,params=None):
+        super().__init__(config,params=params)
+        self.pto = OntologyPTOClient(config)
         self.eccf = OntologyECCFClient(config)
+        self.products=None
+        self.services=None
+        self.set_information_needs()
+
+    def set_information_needs(self):
+        self.products=self._set_products_information_needs()
+        self.services=self._set_services_information_needs()
+
+    def _set_products_information_needs(self):
+        products=self._get_products()
+        information_needs= self._create_products_information_needs(products)
+        return information_needs
+
+    def _get_products(self):
+        sample_products=[]
+        sample_product_keys=random.sample(list(self.pto.loadeddata.data.keys()),self.parameters['number_of_products'])
+        for key in sample_product_keys:
+            sample_products.append(self.pto.loadeddata.data[key])
+        return sample_products
+
+    def _create_products_information_needs(self,products):
+        information_needs=[]
+        for product in products:
+            information_needs.extend(self._create_product_information_needs(product))
+        return information_needs
+
+    def _create_product_information_needs(self,product):
+        response = []
+        message0 = f"What should I know about {product[0]}?"
+        message1 = f"What cyber threats are related to {product[0]}?"
+        response.append(self.openai.call_openai(message0))
+        response.append(self.openai.call_openai(message1))
+        return response
+
+    def _set_services_information_needs(self):
+        services= self._get_services()
+        information_needs=self._create_services_information_needs(services['services'])
+        return information_needs
+
+    def _get_services(self):
+        service_obj=None
+        for key in self.eccf.extracted_data.keys():
+            if 'Service' in self.eccf.extracted_data[key].label:
+                service_obj=self.eccf.extracted_data[key]
+        constraints_string=""
+        for key in service_obj.constraints.keys():
+            constraints_string+=f"{key}  {service_obj.constraints[key]},\n"
+
+        string_query=f"Give {self.parameters['number_of_services']} examples of {service_obj.label} which {constraints_string} , return the result in json format"
+        response = self.openai.call_openai(string_query)
+        return self._construct_service(response)
+
+    @staticmethod
+    def _construct_service(response):
+        data=response.split('```')
+        data = json.loads(data[1].replace('json',''))
+        return data
+
+
+    def _create_services_information_needs(self,services):
+        information_needs=[]
+        for service in services:
+            text_service=f""
+            for key in service.keys():
+                text_service+=f"{key}  {service[key]},\n"
+            information_needs.extend(self._create_service_information_needs(text_service))
+        return information_needs
+
+    def _create_service_information_needs(self,service):
+        response = []
+        message0 = f"What should I know about {service}?"
+        message1 = f"What cyber threats are related to {service}?"
+        response.append(self.openai.call_openai(message0))
+        response.append(self.openai.call_openai(message1))
+        return response
+
+
+

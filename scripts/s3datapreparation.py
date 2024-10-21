@@ -7,7 +7,7 @@ from owlready2 import *
 from rdflib import Graph
 import pprint
 
-def run():
+def data_preparation():
     CONFIG = read_config("../config/config.ini")
     #Data Preparation Script
     print("Starting Data Preparation and Testing Script...")
@@ -40,8 +40,3 @@ def run():
     #for key in clientECCF.extracted_data.keys():
     #    print(clientECCF.extracted_data[key].to_tuple())
     print("Testing Companies Dataset")
-
-
-
-if __name__ == '__main__':
-    run()
