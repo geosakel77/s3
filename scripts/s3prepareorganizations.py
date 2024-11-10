@@ -13,7 +13,7 @@ def prepare_organizations(CONFIG):
                       'suppliers_size': random.randint(5, 20), 'suppliers_industries': random.randint(2, 10),
                       'number_of_cs_loans': random.randint(0, 8), 'number_of_cs_funds': random.randint(0, 8),
                       'business_activities_choice': random.randint(2, 15),
-                      'business_activities_size': random.randint(5, 20),
+                      'business_activities_size': random.randint(5, 15),
                       'number_of_internal_operations': random.randint(1, 10),
                       'number_of_information_systems': random.randint(10, 20),
                       'number_of_products': random.randint(1, 10), 'number_of_services': random.randint(1, 10)}

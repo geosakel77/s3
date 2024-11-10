@@ -81,9 +81,9 @@ class OntologyNACEClient(OntologyClient):
         super().__init__(config, path_key, path_entry_key)
         self.loadeddata = JSONClient(config, path_key='nace_json')
 
-    def write_to_file(self, filepath):
-        print(f"Writing extracted data to: {filepath}")
-        with open(filepath, "w") as f:
+    def write_to_file(self):
+        print(f"Writing extracted data to: {self.config['nace_json']}")
+        with open(self.config['nace_json'], "w") as f:
             f.write(json.dumps(self.extracted_data))
 
     def get_data(self):
@@ -529,9 +529,9 @@ class OntologyPTOClient(OntologyClient):
         self.loadeddata = JSONClient(config, path_key='pto_json')
 
 
-    def write_to_file(self, filepath):
-        print(f"Writing extracted data to: {filepath}")
-        with open(filepath, "w") as f:
+    def write_to_file(self):
+        print(f"Writing extracted data to: {self.config['pto_json']}")
+        with open(self.config['pto_json'], "w") as f:
             f.write(json.dumps(self.extracted_data))
 
     def get_data(self):

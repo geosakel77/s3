@@ -2,8 +2,9 @@ import json
 import random,re
 from random import sample
 import pandas as pd
+from pika.spec import props
 
-from s3lib.libclients import OpenAIClient, OntologyFIBOClient, OntologyGPOClient, OntologyECCFClient, \
+from s3lib.s3clientslib import OpenAIClient, OntologyFIBOClient, OntologyGPOClient, OntologyECCFClient, \
     OntologyNACEClient, \
     CompaniesClient, CPEClient, OntologyPTOClient
 
@@ -49,25 +50,19 @@ class Landscape:
 
 
 class InputLandscape(Landscape):
-    """
-    :parameter:
-        params: a dictionary that defines the landscape parameters
-                :params keys:
-                        competitors_size: the number of competitors
-                        competitors_industries: the industries on which competitors belongs
-                        suppliers_size: the number of suppliers
-                        suppliers_industries: the industries on which suppliers belongs
-    """
 
-    def __init__(self, config, params=None):
-        super().__init__(config, params=params)
+    def __init__(self, config, params=None,load_from_file=False,loaded_data=None):
+        super().__init__(config, params=params,load_from_file=load_from_file,loaded_data=loaded_data)
         self.competitors_industries_choice = self._get_industries_choices(params['competitors_industries'])
         self.suppliers_industries_choice = self._get_industries_choices(params['suppliers_industries'])
         self.suppliers_size = self._get_industries_size(params['suppliers_size'], self.suppliers_industries_choice)
         self.competitors_size = self._get_industries_size(params['competitors_size'],
                                                           self.competitors_industries_choice)
-        self.companies = CompaniesClient(config)
-        self.fibo = OntologyFIBOClient(config)
+        if not self.load_from_file:
+            print("Initializing CompaniesClient....")
+            self.companies = CompaniesClient(config)
+            print("Initializing FIBOClient....")
+            self.fibo = OntologyFIBOClient(config)
         self.suppliers = None
         self.competitors = None
         self.loans = None
@@ -83,6 +78,7 @@ class InputLandscape(Landscape):
         else:
             industries_choices = random.sample(list(self.config['industries_choice'].keys()),
                                                random.randrange(len(list(self.config['industries_choice'].keys()))))
+            print(f"Preparing Industries Choices: {industries_choices}")
         return industries_choices
 
     @staticmethod
@@ -95,13 +91,20 @@ class InputLandscape(Landscape):
 
     def set_information_needs(self):
         if self.load_from_file:
+            print("Loading Suppliers...")
             self.suppliers = self.loaded_data['suppliers']
+            print("Loading Competitors...")
             self.competitors = self.loaded_data['competitors']
+            print("Loading Loans...")
             self.loans = self.loaded_data['loans']
+            print("Loading Funds...")
             self.funds = self.loaded_data['funds']
         else:
+            print("Initializing Suppliers...")
             self._set_suppliers_information_needs()
+            print("Initializing Competitors...")
             self._set_competitors_information_needs()
+            print("Initializing Capital Sources...")
             self._set_capital_sources_information_needs()
 
     def _set_capital_sources_information_needs(self):
@@ -149,7 +152,6 @@ class InputLandscape(Landscape):
         returned_data = []
         for f_obj in funds_objects:
             returned_data.append(self._create_funds_information_needs(f_obj))
-            break
         return returned_data
 
     def _create_funds_information_needs(self, f_obj):
@@ -191,7 +193,7 @@ class InputLandscape(Landscape):
             # Suppliers
             response.extend(self._supplier_information_needs(row))
         elif ctype == 1:
-            # Competititors
+            # Competitors
             response.extend(self._competitor_information_needs(row))
         return response
 
@@ -215,13 +217,17 @@ class InputLandscape(Landscape):
 
 class TransformationProcessLandscape(Landscape):
 
-    def __init__(self, config,params):
-        super().__init__(config,params=params)
-        self.nace = OntologyNACEClient(config)
-        self.gpo = OntologyGPOClient(config)
-        self.cpe = CPEClient(config)
-        self.business_activities_choice= self._get_business_activities_choice(self.parameters['business_activities_choice'])
-        self.business_activities_size = self._get_business_activities_size(self.parameters['business_activities_size'],
+    def __init__(self, config, params=None, load_from_file=False, loaded_data=None):
+        super().__init__(config, params=params, load_from_file=load_from_file, loaded_data=loaded_data)
+        if not self.load_from_file:
+            print("Initializing NACEClient....")
+            self.nace = OntologyNACEClient(config)
+            print("Initializing GPOClient....")
+            self.gpo = OntologyGPOClient(config)
+            print("Initializing CPEClient....")
+            self.cpe = CPEClient(config)
+            self.business_activities_choice= self._get_business_activities_choice(self.parameters['business_activities_choice'])
+            self.business_activities_size = self._get_business_activities_size(self.parameters['business_activities_size'],
                                                           self.business_activities_choice)
         self.business_activities=None
         self.internal_operations=None
@@ -236,6 +242,7 @@ class TransformationProcessLandscape(Landscape):
         else:
             business_activities_choices = random.sample(list(self.config['business_activities_choice'].keys()),
                                                    random.randrange(len(list(self.config['business_activities_choice'].keys()))))
+        print(f"Preparing Business Activities Choices: {business_activities_choices}")
         return business_activities_choices
 
 
@@ -248,9 +255,20 @@ class TransformationProcessLandscape(Landscape):
         return final_size
 
     def set_information_needs(self):
-        #self.business_activities=self._set_business_activities_information_needs()
-        #self.internal_operations=self._set_internal_operations_information_needs()
-        self.information_systems=self._set_information_systems_information_needs()
+        if self.load_from_file:
+            print("Loading Business Activities...")
+            self.business_activities = self.loaded_data['business_activities']
+            print("Loading Internal Operations...")
+            self.internal_operations= self.loaded_data['internal_operations']
+            print("Loading Information Systems...")
+            self.information_systems = self.loaded_data['information_systems']
+        else:
+            print("Initializing Business Activities...")
+            self.business_activities=self._set_business_activities_information_needs()
+            print("Initializing Internal Operations...")
+            self.internal_operations=self._set_internal_operations_information_needs()
+            print("Initializing Information Systems...")
+            self.information_systems=self._set_information_systems_information_needs()
 
 
 
@@ -317,10 +335,6 @@ class TransformationProcessLandscape(Landscape):
             returned_activities.append(concepts[s])
         return returned_activities,t
 
-        #sample = random.sample(business_activities[index]['narrower_concepts'], activities_distribution[idx])
-        #print(sample)
-        #print(business_activities[index])
-        # print(business_activities[index])
 
 
     def _set_internal_operations_information_needs(self):
@@ -344,7 +358,7 @@ class TransformationProcessLandscape(Landscape):
         return response
 
     def _get_internal_operations(self):
-        gpo=self.gpo.get_data()
+        gpo=self.gpo.extracted_data
         cleaned_operations=[]
         for e in gpo.keys():
             if 'Process' in gpo[e].label:
@@ -356,7 +370,6 @@ class TransformationProcessLandscape(Landscape):
     def _set_information_systems_information_needs(self):
         information_systems=self._get_information_systems()
         information_needs=self._create_information_systems_information_needs(information_systems)
-        print(information_needs)
         return information_needs
 
     def _get_information_systems(self):
@@ -380,17 +393,28 @@ class TransformationProcessLandscape(Landscape):
 
 class OutputLandscape(Landscape):
 
-    def __init__(self, config,params=None):
-        super().__init__(config,params=params)
-        self.pto = OntologyPTOClient(config)
-        self.eccf = OntologyECCFClient(config)
+    def __init__(self, config, params=None,load_from_file=False,loaded_data=None):
+        super().__init__(config, params=params,load_from_file=load_from_file,loaded_data=loaded_data)
+        if not self.load_from_file:
+            print("Initializing PTOClient...")
+            self.pto = OntologyPTOClient(config)
+            print("Initializing ECCFClient...")
+            self.eccf = OntologyECCFClient(config)
         self.products=None
         self.services=None
         self.set_information_needs()
 
     def set_information_needs(self):
-        self.products=self._set_products_information_needs()
-        self.services=self._set_services_information_needs()
+        if self.load_from_file:
+            print("Loading Products...")
+            self.products=self.loaded_data['products']
+            print("Loading Services...")
+            self.services=self.loaded_data['services']
+        else:
+            print("Initializing Products...")
+            self.products=self._set_products_information_needs()
+            print("Initializing Services...")
+            self.services=self._set_services_information_needs()
 
     def _set_products_information_needs(self):
         products=self._get_products()
@@ -420,7 +444,7 @@ class OutputLandscape(Landscape):
 
     def _set_services_information_needs(self):
         services= self._get_services()
-        information_needs=self._create_services_information_needs(services['services'])
+        information_needs=self._create_services_information_needs(services)
         return information_needs
 
     def _get_services(self):
@@ -431,10 +455,10 @@ class OutputLandscape(Landscape):
         constraints_string=""
         for key in service_obj.constraints.keys():
             constraints_string+=f"{key}  {service_obj.constraints[key]},\n"
-
         string_query=f"Give {self.parameters['number_of_services']} examples of {service_obj.label} which {constraints_string} , return the result in json format"
         response = self.openai.call_openai(string_query)
-        return self._construct_service(response)
+        services=self._construct_service(response)
+        return services
 
     @staticmethod
     def _construct_service(response):
@@ -442,13 +466,26 @@ class OutputLandscape(Landscape):
         data = json.loads(data[1].replace('json',''))
         return data
 
-
     def _create_services_information_needs(self,services):
+        cleaned_services=None
+        if type(services) == dict:
+            if "services" in services.keys():
+                cleaned_services=services["services"]
+            elif "service" in services.keys():
+                cleaned_services=services["service"]
+        elif type(services) == list:
+            cleaned_services=services
+        elif type(services) == str:
+            print("No typical service format")
+            print(services)
+            return None
         information_needs=[]
-        for service in services:
+        if type(cleaned_services)==dict:
+            cleaned_services=[cleaned_services]
+        for service in cleaned_services:
             text_service=f""
             for key in service.keys():
-                text_service+=f"{key}  {service[key]},\n"
+                text_service+=f"{key}  {service[key]}, "
             information_needs.extend(self._create_service_information_needs(text_service))
         return information_needs
 
