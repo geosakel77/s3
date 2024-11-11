@@ -35,15 +35,33 @@ class RelevanceMetricEngine(Engine):
         def calculate_input_landscape_minhash(self):
             input_landscape = self.organization.input_landscape
             suppliers=self._clean_suppliers(input_landscape.suppliers)
-            #print(suppliers)
+            competitors=self._clean_competitors(input_landscape.competitors)
             loans=self._clean_loans(input_landscape.loans)
-            print(loans)
-            #print(input_landscape.funds)
-            #print(input_landscape.loans)
-
+            funds=self._clean_funds(input_landscape.funds)
+            landscape=[]
+            landscape.extend(suppliers)
+            landscape.extend(competitors)
+            landscape.extend(loans)
+            landscape.extend(funds)
+            landscape= set(landscape)
+            print(len(landscape))
 
             #TODO
             return 1
+        def _clean_funds(self,funds):
+            cleaned_funds=[]
+            text_funds=""
+            for fund in funds:
+                fund_split = fund.split('```')
+                for fund_split_part in fund_split:
+                    if fund_split_part.startswith('json'):
+                        data = self._clean_dict(fund_split_part.replace("json", ""))
+                        text_funds += data
+                    elif 'threats' in fund_split_part.lower():
+                        text_funds += fund_split_part
+            cleaned_funds.extend(self._clean_text(text_funds))
+            return cleaned_funds
+
         def _clean_loans(self,loans):
             cleaned_loans=[]
             text_loans=""
@@ -58,6 +76,15 @@ class RelevanceMetricEngine(Engine):
             cleaned_loans.extend(self._clean_text(text_loans))
             return cleaned_loans
 
+        def _clean_competitors(self,competitors):
+            cleaned_competitor=""
+            for key in competitors.keys():
+                competitor=competitors[key]
+                doc_competitor=""
+                for info_part in competitor:
+                    doc_competitor+=info_part
+                cleaned_competitor+=doc_competitor
+            return self._clean_text(cleaned_competitor)
 
         def _clean_suppliers(self,suppliers):
             cleaned_suppliers=""
@@ -90,7 +117,7 @@ class RelevanceMetricEngine(Engine):
                     cleaned_text_words.append(word)
                 else:
                     cleaned_text_words.append(word)
-            text_data=cleaned_text_words
+            text_data=[word for word in cleaned_text_words if len(word)>2]
             text_data=set(text_data)
             return text_data
 
