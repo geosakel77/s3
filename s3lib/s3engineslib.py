@@ -1,3 +1,4 @@
+import nltk
 
 class Engine:
     def __init__(self,config,organization,product):
@@ -12,6 +13,8 @@ class EngineCore:
         self.config = config
         self.organization = organization
         self.product = product
+        nltk.download('stopwords')
+        nltk.download('wordnet')
 
     def calculate_metric(self):
         pass
