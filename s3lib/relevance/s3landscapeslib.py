@@ -449,6 +449,7 @@ class OutputLandscape(Landscape):
 
     def _get_services(self):
         service_obj=None
+        print(self.eccf.extracted_data.keys())
         for key in self.eccf.extracted_data.keys():
             if 'Service' in self.eccf.extracted_data[key].label:
                 service_obj=self.eccf.extracted_data[key]

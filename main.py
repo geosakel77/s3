@@ -1,31 +1,46 @@
-from config.config import read_config
-from config.orgprofilesconf import *
-from s3lib.s3organizationslib import OrganizationRelevance
+from config.config import read_config,prepare_relevance_metric_config,prepare_actionability_metric_config
+from s3lib.s3organizationslib import OrganizationRelevance, OrganizationActionability
 from s3lib.relevance.s3relevancelib import RelevanceMetricEngine
 
-def run():
 
-    print(f"Starting the experiment...")
-    print("Reading the experiment configuration...")
-    CONFIG = read_config("config/config.ini")
-    print(f"Reading the organizations configuration..")
-    organizations_names = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10']
-    organizations_conf = {'c1': C1, 'c2': C2, 'c3': C3, 'c4': C4, 'c5': C5, 'c6': C6, 'c7': C7, 'c8': C8, 'c9': C9,
-                          'c10': C10}
-    print("Loading the organizations ..... ")
-    organizations={}
+def run_relevance_metric_experiments(config):
+    organizations_names, organizations_conf = prepare_relevance_metric_config()
+    print("Loading the relevance metric organizations ..... ")
+    organizations = {}
     for organization_name in organizations_names:
         print(f"Loading organization {organization_name}...")
-        organization = OrganizationRelevance(name=organization_name, config=CONFIG,
-                                             params=organizations_conf[organization_name],load_from_file=True)
+        organization = OrganizationRelevance(name=organization_name, config=config,
+                                             params=organizations_conf[organization_name], load_from_file=True)
         organizations[organization_name] = organization
-        break
 
-    sample_cti="ddsdsdsds fsffdfdf sfdfdfd"
+    sample_cti = "ddsdsdsds fsffdfdf sfdfdfd"
     for organization_name in organizations.keys():
-        engine=RelevanceMetricEngine(CONFIG,organizations[organization_name],sample_cti)
+        engine = RelevanceMetricEngine(config, organizations[organization_name], sample_cti)
         print(engine.get_metric())
-        
+
+def run_actionability_metric_experiments(config):
+    organizations_names, organizations_conf = prepare_actionability_metric_config()
+    print("Loading the actionability metric organizations ..... ")
+    organizations = {}
+    for organization_name in organizations_names:
+        print(f"Loading organization {organization_name}...")
+        organization = OrganizationActionability(name=organization_name, config=config,
+                                             params=organizations_conf[organization_name], load_from_file=True)
+        organizations[organization_name] = organization
+
+    sample_cti = "ddsdsdsds fsffdfdf sfdfdfd"
+    for organization_name in organizations.keys():
+        engine = ActionabilityMetricEngine(config, organizations[organization_name], sample_cti)
+        print(engine.get_metric())
+
+def run():
+    config = read_config("config/config.ini")
+
+    print(f"Starting the experiment...")
+    run_relevance_metric_experiments(config)
+    run_actionability_metric_experiments(config)
+
+
     print(f"End of the experimental environment preparation")
 
 

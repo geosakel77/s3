@@ -1,10 +1,7 @@
-import json
-
 from s3lib.s3engineslib import Engine, EngineCore
 from datasketch import MinHash
 from statistics import mean
 import re
-import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
@@ -13,7 +10,9 @@ class RelevanceMetricEngine(Engine):
 
     def __init__(self,config,target_organization=None, cti_product=None):
         super().__init__(config,target_organization,cti_product)
-        self.engine_core=self.RelevanceMetricCore(self.config,self.organization,self.product)
+        landscapes=[self.calculate_input_landscape(),self.calculate_output_landscape(),self.calculate_transformation_process_landscape()]
+
+        self.engine_core=self.RelevanceMetricCore(self.config,self.product,landscapes)
 
     def _set_organization(self,target_organization):
         self.organization = target_organization
@@ -24,104 +23,199 @@ class RelevanceMetricEngine(Engine):
     def get_metric(self):
         return self.engine_core.calculate_metric()
 
+    def calculate_input_landscape(self):
+        input_landscape = self.organization.input_landscape
+        suppliers = self._clean_suppliers(input_landscape.suppliers)
+        competitors = self._clean_competitors(input_landscape.competitors)
+        loans = self._clean_loans(input_landscape.loans)
+        funds = self._clean_funds(input_landscape.funds)
+        landscape = []
+        landscape.extend(suppliers)
+        landscape.extend(competitors)
+        landscape.extend(loans)
+        landscape.extend(funds)
+        landscape = set(landscape)
+        return landscape
+
+    def _clean_funds(self, funds):
+        cleaned_funds = []
+        text_funds = ""
+        for fund in funds:
+            fund_split = fund.split('```')
+            for fund_split_part in fund_split:
+                if fund_split_part.startswith('json'):
+                    data = self._clean_dict(fund_split_part.replace("json", ""))
+                    text_funds += data
+                elif 'threats' in fund_split_part.lower():
+                    text_funds += fund_split_part
+        cleaned_funds.extend(self._clean_text(text_funds))
+        return cleaned_funds
+
+    def _clean_loans(self, loans):
+        cleaned_loans = []
+        text_loans = ""
+        for loan in loans:
+            loan_split = loan.split('```')
+            for loan_split_part in loan_split:
+                if loan_split_part.startswith('json'):
+                    data = self._clean_dict(loan_split_part.replace("json", ""))
+                    text_loans += data
+                elif 'threats' in loan_split_part.lower():
+                    text_loans += loan_split_part
+        cleaned_loans.extend(self._clean_text(text_loans))
+        return cleaned_loans
+
+    def _clean_competitors(self, competitors):
+        cleaned_competitor = ""
+        for key in competitors.keys():
+            competitor = competitors[key]
+            doc_competitor = ""
+            for info_part in competitor:
+                doc_competitor += info_part
+            cleaned_competitor += doc_competitor
+        return self._clean_text(cleaned_competitor)
+
+    def _clean_suppliers(self, suppliers):
+        cleaned_suppliers = ""
+        for key in suppliers.keys():
+            supplier = suppliers[key]
+            doc_supplier = ""
+            for info_part in supplier:
+                doc_supplier += info_part
+            cleaned_suppliers += doc_supplier
+        return self._clean_text(cleaned_suppliers)
+
+    def calculate_output_landscape(self):
+        output_landscape = self.organization.output_landscape
+        products = self._clean_products(output_landscape.products)
+        services = self._clean_services(output_landscape.services)
+        landscape = []
+        landscape.extend(products)
+        landscape.extend(services)
+        landscape = set(landscape)
+        return landscape
+
+    def _clean_services(self, services):
+        cleaned_services = []
+        doc_services = ""
+        for service in services:
+            doc_services += service
+        cleaned_services.extend(self._clean_text(doc_services))
+        return cleaned_services
+
+    def _clean_products(self, products):
+        cleaned_products = []
+        doc_products = ""
+        for product in products:
+            doc_products += product
+        cleaned_products.extend(self._clean_text(doc_products))
+        return cleaned_products
+
+    def calculate_transformation_process_landscape(self):
+        transformation_process_landscape = self.organization.transformation_process_landscape
+        business_activities = self._clean_business_activities(transformation_process_landscape.business_activities)
+        internal_operations = self._clean_internal_operations(transformation_process_landscape.internal_operations)
+        information_systems = self._clean_information_systems(transformation_process_landscape.information_systems)
+        landscape = []
+        landscape.extend(business_activities)
+        landscape.extend(internal_operations)
+        landscape.extend(information_systems)
+        landscape = set(landscape)
+        return landscape
+
+    def _clean_information_systems(self, information_systems):
+        cleaned_information_systems = []
+        doc_information_system = ""
+        for information_system in information_systems:
+            doc_information_system += information_system
+        cleaned_information_systems.extend(self._clean_text(doc_information_system))
+        return cleaned_information_systems
+
+    def _clean_internal_operations(self, internal_operations):
+        cleaned_internal_operations = []
+        doc_operations = ""
+        for operation in internal_operations:
+            doc_operations += operation
+        cleaned_internal_operations.extend(self._clean_text(doc_operations))
+        return cleaned_internal_operations
+
+    def _clean_business_activities(self, business_activities):
+        cleaned_business_activities = []
+        doc_activities = ""
+        for activity in business_activities:
+            doc_activities += activity
+        cleaned_business_activities.extend(self._clean_text(doc_activities))
+        return cleaned_business_activities
+
+    @staticmethod
+    def _clean_text(text_to_clean):
+        text_data = text_to_clean
+        text_data = text_data.lower()
+        text_data = text_data.split()
+        wl = WordNetLemmatizer()
+        text_data = [wl.lemmatize(word) for word in text_data if not word in set(stopwords.words('english'))]
+        text_data = [re.sub('[^A-Za-z0-9.-]+', '', word) for word in text_data if len(word) > 2]
+        cleaned_text_words = []
+        for word in text_data:
+            if word.endswith('.'):
+                text = word
+                word = text[:text.rfind('.')] + text[text.rfind('.') + 1:]
+                cleaned_text_words.append(word)
+            else:
+                cleaned_text_words.append(word)
+        text_data = [word for word in cleaned_text_words if len(word) > 2]
+        text_data = set(text_data)
+        return text_data
+
+    @staticmethod
+    def _clean_dict(dict_data):
+        text_data = dict_data
+        text_data = text_data.lower().replace('}', '').replace('{', '').replace('"', '').replace('_', ' ').replace('\n',
+                                                                                                                   ' ').replace(
+            '\t', ' ').replace(':', '').replace(',', '')
+        return text_data
+
+
 
     class RelevanceMetricCore(EngineCore):
-        def __init__(self,config,target_organization, cti_product):
-            super().__init__(config,target_organization,cti_product)
+        def __init__(self,config,cti_product,landscapes):
+            super().__init__(config,cti_product)
+            self.landscapes=landscapes
 
         def calculate_metric(self):
-            return mean([self.calculate_output_landscape_minhash(),self.calculate_input_landscape_minhash(),self.calculate_transformation_process_landscape()])
+            minhash_list=[]
+            for landscape in self.landscapes:
+                minhash_list.append(self._compute_minhash(landscape))
 
-        def calculate_input_landscape_minhash(self):
-            input_landscape = self.organization.input_landscape
-            suppliers=self._clean_suppliers(input_landscape.suppliers)
-            competitors=self._clean_competitors(input_landscape.competitors)
-            loans=self._clean_loans(input_landscape.loans)
-            funds=self._clean_funds(input_landscape.funds)
-            landscape=[]
-            landscape.extend(suppliers)
-            landscape.extend(competitors)
-            landscape.extend(loans)
-            landscape.extend(funds)
-            landscape= set(landscape)
-            print(len(landscape))
+            #TODO minhash CTI
+            #minhash_cti=self._compute_minhash(self.product)
+            #comparison_results_list=[]
+            #for minhash in minhash_list:
+            #    comparison_results_list.append(self._jaccard_similarity(minhash,minhash_cti))
 
-            #TODO
-            return 1
-        def _clean_funds(self,funds):
-            cleaned_funds=[]
-            text_funds=""
-            for fund in funds:
-                fund_split = fund.split('```')
-                for fund_split_part in fund_split:
-                    if fund_split_part.startswith('json'):
-                        data = self._clean_dict(fund_split_part.replace("json", ""))
-                        text_funds += data
-                    elif 'threats' in fund_split_part.lower():
-                        text_funds += fund_split_part
-            cleaned_funds.extend(self._clean_text(text_funds))
-            return cleaned_funds
+            return mean([1,1,1])
 
-        def _clean_loans(self,loans):
-            cleaned_loans=[]
-            text_loans=""
-            for loan in loans:
-                loan_split=loan.split('```')
-                for loan_split_part in loan_split:
-                    if loan_split_part.startswith('json'):
-                        data = self._clean_dict(loan_split_part.replace("json",""))
-                        text_loans += data
-                    elif 'threats' in loan_split_part.lower():
-                        text_loans += loan_split_part
-            cleaned_loans.extend(self._clean_text(text_loans))
-            return cleaned_loans
+        @staticmethod
+        def _compute_minhash(landscape, num_perm=128):
+            """
+            Computes the MinHash signature for a set of tokens using the datasketch library.
 
-        def _clean_competitors(self,competitors):
-            cleaned_competitor=""
-            for key in competitors.keys():
-                competitor=competitors[key]
-                doc_competitor=""
-                for info_part in competitor:
-                    doc_competitor+=info_part
-                cleaned_competitor+=doc_competitor
-            return self._clean_text(cleaned_competitor)
+            :param tokens: an iterable of hashable tokens (e.g., words in a document)
+            :param num_perm: number of permutations/hashes to use for the MinHash
+            :return: a MinHash object representing the signature
+            """
+            minhash = MinHash(num_perm=num_perm)
+            for token in landscape:
+                minhash.update(token.encode('utf8'))
+            return minhash
 
-        def _clean_suppliers(self,suppliers):
-            cleaned_suppliers=""
-            for key in suppliers.keys():
-                supplier=suppliers[key]
-                doc_supplier=""
-                for info_part in supplier:
-                    doc_supplier+=info_part
-                cleaned_suppliers+=doc_supplier
-            return self._clean_text(cleaned_suppliers)
+        @staticmethod
+        def _jaccard_similarity(self,minhash1, minhash2):
+            """
+            Computes the Jaccard similarity between two MinHash objects.
 
-        def calculate_output_landscape_minhash(self):
-            return 1
-
-        def calculate_transformation_process_landscape(self):
-            return 1
-
-        def _clean_text(self,text_to_clean):
-            text_data=text_to_clean
-            text_data=text_data.lower()
-            text_data = text_data.split()
-            wl = WordNetLemmatizer()
-            text_data=[wl.lemmatize(word) for word in text_data if not word in set(stopwords.words('english'))]
-            text_data=[re.sub('[^A-Za-z0-9.-]+','',word) for word in text_data if len(word)>2]
-            cleaned_text_words=[]
-            for word in text_data:
-                if word.endswith('.'):
-                    text= word
-                    word=text[:text.rfind('.')] + text[text.rfind('.') + 1:]
-                    cleaned_text_words.append(word)
-                else:
-                    cleaned_text_words.append(word)
-            text_data=[word for word in cleaned_text_words if len(word)>2]
-            text_data=set(text_data)
-            return text_data
-
-        def _clean_dict(self,dict_data):
-            text_data=dict_data
-            text_data=text_data.lower().replace('}','').replace('{','').replace('"','').replace('_',' ').replace('\n',' ').replace('\t',' ').replace(':','').replace(',','')
-            return text_data
+            :param minhash1: The first MinHash object
+            :param minhash2: The second MinHash object
+            :return: The Jaccard similarity between the two MinHash signatures
+            """
+            return minhash1.jaccard(minhash2)

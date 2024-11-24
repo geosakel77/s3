@@ -9,9 +9,8 @@ class Engine:
 
 
 class EngineCore:
-    def __init__(self,config,organization,product):
+    def __init__(self,config,product):
         self.config = config
-        self.organization = organization
         self.product = product
         nltk.download('stopwords')
         nltk.download('wordnet')

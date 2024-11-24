@@ -14,7 +14,9 @@ class Test(TestCase):
                         'fibo_entry_funds', 'fibo_entry_fps',
                         'nace_path', 'nace_entry', 'skos_entry', 'dcat_entry', 'companies_path',
                         'nace_json', 'gpo_path', 'gpo_entry', 'cpe_path', 'eccf_path', 'eccf_entry', 'pto_path',
-                        'pto_entry', 'pto_json', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10',
-                        'landscape_lo', 'landscape_li', 'landscape_ltp','industries_choice','business_activities_choice']
+                        'pto_entry', 'pto_json', 'rc1', 'rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7', 'rc8', 'rc9', 'rc10',
+                        'landscape_lo', 'landscape_li', 'landscape_ltp', 'industries_choice',
+                        'business_activities_choice', 'ac1', 'ac2', 'ac3', 'ac4', 'ac5', 'ac6', 'ac7', 'ac8', 'ac9',
+                        'ac10']
 
         self.assertCountEqual(self.config.keys(), list_of_keys, "Configuration Keys Exist")
