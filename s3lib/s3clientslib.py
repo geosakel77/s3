@@ -1,7 +1,9 @@
 
 from typing import  Any
 from urllib.error import URLError
-
+import os
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 from numpy.random import PCG64, SeedSequence
 from pycti import OpenCTIApiClient
 from openai import OpenAI
@@ -11,22 +13,302 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.sparql import prepareQuery
 import pandas as pd
 import xml.etree.ElementTree as ET
-
+import mandiant_threatintel
+from fpdf import FPDF
+from datetime import datetime
+from PyPDF2 import PdfReader
+from s3lib.s3functions import clean_text
 
 class Client:
     def __init__(self, config):
         self.config = config
 
 
-class OpenCTIClient(Client):
-    def __init__(self, config, api_url='api_url', api_key='api_key'):
+class CTIClient(Client):
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.reports_path = self.config['reports_path']
+        self.images_path = self.config['images_path']
+
+    def get_reports(self):
+        pass
+
+    def write_reports(self):
+        pass
+
+class LocalCTIClient(CTIClient):
+    def __init__(self, config,cti_data_path='cti_data_path', raw_data_client=True):
+        super().__init__(config)
+        self.cti_data_path = self.config[cti_data_path]
+        if raw_data_client:
+            self.reports_paths = self._get_cti_reports()
+            self.reports_data()
+
+    def reports_data(self):
+        for filepath in self.reports_paths:
+            data =self._extract_pdf_data(filepath)
+            print(data)
+            cleaned_data = clean_text(data)
+            print(cleaned_data)
+
+
+    def _get_cti_reports(self):
+        reports_paths=[]
+        for filename in os.listdir(self.reports_path):
+            file_path = os.path.join(self.reports_path, filename)
+            if os.path.isfile(file_path):
+                reports_paths.append(file_path)
+        return reports_paths
+
+    def _extract_pdf_data(self,filepath):
+        reader = PdfReader(filepath)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
+
+
+
+class MandiantCTIClient(CTIClient):
+    """
+        Initializes the MandiantCTIClient.
+
+        Args:
+            config (dict): Configuration dictionary containing keys for authentication and settings.
+            mandiant_key_id (str): Key for retrieving Mandiant key ID from the config dictionary.
+            mandiant_key_secret (str): Key for retrieving Mandiant key secret from the config dictionary.
+            epoch (int): Number of months back to fetch reports for.
+    """
+
+    def __init__(self, config,mandiant_key_id='mandiant_key_id',mandiant_key_secret='mandiant_key_secret',epoch=1,lepoch=None):
+        super().__init__(config)
+        self.key_id=self.config[mandiant_key_id]
+        self.key_secret=self.config[mandiant_key_secret]
+        self.mandiant_client=mandiant_threatintel.ThreatIntelClient(api_key=self.key_id,secret_key=self.key_secret)
+        self.epoch_range=epoch*30
+        self.start_epoch = datetime.datetime.now() - timedelta(days=self.epoch_range)
+        if lepoch is not None:
+            if lepoch<epoch:
+                self.end_epoch =datetime.datetime.now() -timedelta(days=lepoch*30)
+            else:
+                self.end_epoch = datetime.datetime.now()
+        else:
+            self.end_epoch = datetime.datetime.now()
+
+        self.reports = self.get_reports()
+
+    def get_reports(self):
+        return self.mandiant_client.Reports.get_list(self.start_epoch,self.end_epoch)
+
+    def write_reports(self):
+        for report in self.reports:
+            report_file_name = report.report_id + '.pdf'
+            print(f"Writing report: {report.report_id} to file: {report_file_name}")
+            report_file_path = os.path.join(self.reports_path, report_file_name)
+            with open(report_file_path, 'wb') as f:
+                f.write(report.pdf)
+        print(f"Wrote {len(self.reports)} to store.")
+
+class OpenCTIClient(CTIClient):
+    def __init__(self, config, api_url='api_url', api_key='api_key',number_of_reports=100):
         super().__init__(config)
         self.api_url = self.config[api_url]
         self.api_key = self.config[api_key]
+        self.font_path = self.config['font_path']
         self.open_cti_client = OpenCTIApiClient(self.api_url, self.api_key)
+        self.number_of_reports = number_of_reports
+        self.reports = self._get_all_reports(self.number_of_reports)
+        self.write_reports()
 
-    def get_malware(self, search_term="windows"):
-        return self.open_cti_client.malware.list(search=search_term)
+
+    def get_report(self, search_term="windows"):
+        return self.open_cti_client.report.list(search=search_term)
+
+    def  write_reports(self):
+        counter=0
+        for report in self.reports:
+            print(f"Reading report: {report['id']} with title: {report['name']}")
+            data = self._read_report(report['id'])
+            if data is not None:
+                report_object= self.Report(report['id'],data,self.reports_path,self.images_path,self.font_path)
+                counter+=1
+                print(f'Writing report number: {counter}')
+            else:
+                print("No data found")
+        print(f'Wrote {counter} reports to store.')
+
+    def _get_all_reports(self,number_of_results):
+        first_n=50
+        if number_of_results>first_n:
+            first_n= first_n
+        else:
+            first_n=number_of_results
+        custom_attributes = """
+            id
+            name
+        """
+        final_reports = []
+        data = {"pagination": {"hasNextPage": True, "endCursor": None}}
+        while data["pagination"]["hasNextPage"]:
+            after = data["pagination"]["endCursor"]
+            if after:
+                print(f"Listing reports after {after}")
+            data = self.open_cti_client.report.list(
+                first=first_n,
+                after=after,
+                customAttributes=custom_attributes,
+                withPagination=True,
+                orderBy="created_at",
+                orderMode="asc",
+            )
+            final_reports = final_reports + data["entities"]
+            print(f'Number of reports read: {len(final_reports)}')
+            number_of_results=number_of_results-first_n
+            if number_of_results<=0:
+                break
+        return final_reports
+
+    def _read_report(self, report_id):
+        return self.open_cti_client.report.read(id=report_id)
+
+
+    class Report:
+        def __init__(self, report_id,report,reports_path,images_path,font_path):
+            self.report_id = report_id
+            self.report_file_name = report_id + '.pdf'
+            self.report_path= str(os.path.join(reports_path, self.report_file_name))
+            self.images_path= images_path
+            self.font_path = font_path
+            self.report_data= {
+                "name": report.get("name"),
+                "description": report.get("description"),
+                "created": report.get("created"),
+                "report_types": report.get("report_types"),
+                "related_indicators": [],
+                "related_observables": [],
+                "related_attack_patterns": [],
+                "related_malware": [],
+                "related_campaigns": [],
+                "relationships": [],
+                "external_references": report.get("externalReferences", []),
+                }
+            self._retrieve_linked_objects(report)
+            self._create_enhanced_pdf()
+
+
+        def _retrieve_linked_objects(self,report):
+            for obj in report.get("objects", []):
+                entity_type = obj.get("entity_type")
+                if entity_type == "Indicator":
+                    self.report_data["related_indicators"].append(obj)
+                elif entity_type == "Stix-Cyber-Observable":
+                    self.report_data["related_observables"].append(obj)
+                elif entity_type == "Attack-Pattern":
+                    self.report_data["related_attack_patterns"].append(obj)
+                elif entity_type == "Malware":
+                    self.report_data["related_malware"].append(obj)
+                elif entity_type == "Campaign":
+                    self.report_data["related_campaigns"].append(obj)
+                elif entity_type == "Relationship":
+                    self.report_data["relationships"].append(obj)
+
+        def _create_enhanced_pdf(self):
+            report_data= self.report_data
+            pdf = self.EnhancedPDF(font_path=self.font_path)
+            pdf.add_page()
+            pdf.set_font('DejaVu', '', 12)
+
+            # Add general report info
+            pdf.cell(0, 10, f"Report Name: {report_data['name']}", ln=True)
+            pdf.cell(0, 10, f"Description: {report_data['description']}", ln=True)
+            pdf.cell(0, 10, f"Created: {datetime.fromisoformat(report_data['created'][:-1])}", ln=True)
+            pdf.cell(0, 10, "Report Types: " + ", ".join(report_data['report_types']), ln=True)
+            pdf.ln(10)
+
+            # Add sections
+            pdf.add_section("Related Indicators", [f"{i.get('name', 'Unnamed')} (Pattern: {i.get('pattern')})" for i in
+                                                   report_data['related_indicators']])
+            pdf.add_section("Related Observables",
+                            [f"{o.get('observable_value')} (Type: {o.get('entity_type')})" for o in
+                             report_data['related_observables']])
+            pdf.add_section("Related Attack Patterns",
+                            [f"{a.get('name')} (ID: {a.get('id')})" for a in report_data['related_attack_patterns']])
+            pdf.add_section("Related Malware",
+                            [f"{m.get('name')} (ID: {m.get('id')})" for m in report_data['related_malware']])
+            pdf.add_section("Related Campaigns",
+                            [f"{c.get('name')} (ID: {c.get('id')})" for c in report_data['related_campaigns']])
+            pdf.add_section("Relationships", [
+                f"{r.get('relationship_type')} from {r.get('from').get('name')} to {r.get('to').get('name')}" for r in
+                report_data['relationships']])
+            pdf.add_section("External References", [f"{ref.get('source_name')}: {ref.get('url')}" for ref in
+                                                    report_data['external_references']])
+
+            # Add a graph example
+            image_filename = self.report_id+".png"
+
+            graph_image = os.path.join(self.images_path, image_filename)
+            self.generate_statistics_graph(report_data, graph_image)
+            pdf.add_graph(graph_image, "Statistical Analysis")
+            pdf.output(self.report_path)
+            print(f"Enhanced PDF generated: {self.report_path}")
+
+        @staticmethod
+        def generate_statistics_graph(report_data, filename):
+
+            labels = ['Indicators', 'Observables', 'Attack Patterns', 'Malware', 'Campaigns']
+            counts = [
+                len(report_data['related_indicators']),
+                len(report_data['related_observables']),
+                len(report_data['related_attack_patterns']),
+                len(report_data['related_malware']),
+                len(report_data['related_campaigns'])
+            ]
+            plt.figure(figsize=(10, 6))
+            plt.bar(labels, counts, color=['blue', 'green', 'orange', 'red', 'purple'])
+            plt.xlabel("Entity Types")
+            plt.ylabel("Counts")
+            plt.title("Entity Distribution in Report")
+            plt.savefig(filename)
+            plt.close()
+
+
+        class EnhancedPDF(FPDF):
+
+            def __init__(self,font_path, *args, ** kwargs):
+                super().__init__(*args, **kwargs)
+                self.font_path = font_path
+
+
+            def header(self):
+                self.add_font('DejaVu', '', self.font_path, uni=True)
+                self.set_font('DejaVu', '', 12)
+                self.cell(0, 10, "OpenCTI S3 Enhanced Report", border=False, ln=True, align="C")
+                self.ln(10)
+
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('DejaVu', '', 10)
+                self.cell(0, 10, f"Page {self.page_no()}", align="C")
+
+            def add_section(self, title, content_list):
+                self.add_page()
+                self.set_font('DejaVu', '', 14)
+                self.cell(0, 10, title, ln=True)
+                self.ln(5)
+                self.set_font('DejaVu', '', 12)
+                for item in content_list:
+                    self.multi_cell(0, 10, f"- {item}", ln=True)
+                    self.ln(2)
+
+            def add_graph(self, image_path, title):
+                self.add_page()
+                self.set_font('DejaVu', '', 14)
+                self.cell(0, 10, title, ln=True)
+                self.ln(10)
+                self.image(image_path, x=10, y=30, w=180)
+                self.ln(85)
+
 
 
 class OpenAIClient(Client):

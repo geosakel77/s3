@@ -34,9 +34,15 @@ def read_config(filepath="config.ini"):
 
     # Access values from the configuration file
     debug_mode = config.getboolean('general', 'debug')
+    font_path=config.get('general', 'font_path')
     log_level = config.get('general', 'log_level')
     api_url = config.get('opencti', 'api_url')
     api_key = config.get('opencti', 'api_key')
+    mandiant_key_id = config.get('opencti', 'mandiant_key_id')
+    mandiant_key_secret = config.get('opencti', 'mandiant_key_secret')
+    reports_path = config.get('opencti', 'reports_path')
+    cti_data_path =config.get('dataset', 'cti_data_path')
+    images_path = config.get('opencti', 'images_path')
     openai_api_key = config.get('openai', 'openai_api_key')
     openai_organization_id = config.get('openai', 'organization_id')
     openai_project_id = config.get('openai', 'project_id')
@@ -82,15 +88,22 @@ def read_config(filepath="config.ini"):
     ac8 = config.get('experiments', 'ac8')
     ac9 = config.get('experiments', 'ac9')
     ac10 = config.get('experiments', 'ac10')
-
+    validation_dataset = config.get('experiments', 'validation_dataset')
+    validation_data_number=config.get('experiments', 'validation_data_number')
     industries_choice = INDUSTRIES
     business_activities_choice = BUSINESS_ACTIVITIES
     # Return a dictionary with the retrieved values
     config_values = {
         'debug_mode': debug_mode,
+        'font_path': font_path,
         'log_level': log_level,
         'api_url': api_url,
         'api_key': api_key,
+        'cti_data_path': cti_data_path,
+        'mandiant_key_id': mandiant_key_id,
+        'mandiant_key_secret': mandiant_key_secret,
+        'reports_path': reports_path,
+        'images_path': images_path,
         'openai_api_key': openai_api_key,
         'openai_organization_id': openai_organization_id,
         'openai_project_id': openai_project_id,
@@ -138,6 +151,8 @@ def read_config(filepath="config.ini"):
         'ac8': ac8,
         'ac9': ac9,
         'ac10': ac10,
+        'validation_dataset': validation_dataset,
+        'validation_data_number': validation_data_number,
 
     }
 

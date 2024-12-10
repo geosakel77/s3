@@ -1,4 +1,4 @@
-from s3lib.s3clientslib import OntologyNACEClient,OntologyPTOClient
+from s3lib.s3clientslib import OntologyNACEClient,OntologyPTOClient,MandiantCTIClient,OpenCTIClient
 
 def data_rel_preparation(config):
     """
@@ -28,5 +28,9 @@ def data_rel_preparation(config):
     print("Data Preparation Complete")
 
 def data_act_preparation(config):
-    #TODO
-    pass
+    print("Starting Data Preparation...")
+    print("Preparing Reports Data...")
+    client= MandiantCTIClient(config,epoch=14)
+    client.write_reports()
+    client = OpenCTIClient(config=config, number_of_reports=30000)
+    print("Data Preparation Complete")

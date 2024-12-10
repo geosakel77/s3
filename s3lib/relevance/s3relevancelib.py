@@ -1,9 +1,8 @@
 from s3lib.s3engineslib import Engine, EngineCore
 from datasketch import MinHash
 from statistics import mean
-import re
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+from s3lib.s3functions import clean_dict,clean_text
+
 
 
 class RelevanceMetricEngine(Engine):
@@ -44,11 +43,11 @@ class RelevanceMetricEngine(Engine):
             fund_split = fund.split('```')
             for fund_split_part in fund_split:
                 if fund_split_part.startswith('json'):
-                    data = self._clean_dict(fund_split_part.replace("json", ""))
+                    data = clean_dict(fund_split_part.replace("json", ""))
                     text_funds += data
                 elif 'threats' in fund_split_part.lower():
                     text_funds += fund_split_part
-        cleaned_funds.extend(self._clean_text(text_funds))
+        cleaned_funds.extend(clean_text(text_funds))
         return cleaned_funds
 
     def _clean_loans(self, loans):
@@ -58,11 +57,11 @@ class RelevanceMetricEngine(Engine):
             loan_split = loan.split('```')
             for loan_split_part in loan_split:
                 if loan_split_part.startswith('json'):
-                    data = self._clean_dict(loan_split_part.replace("json", ""))
+                    data = clean_dict(loan_split_part.replace("json", ""))
                     text_loans += data
                 elif 'threats' in loan_split_part.lower():
                     text_loans += loan_split_part
-        cleaned_loans.extend(self._clean_text(text_loans))
+        cleaned_loans.extend(clean_text(text_loans))
         return cleaned_loans
 
     def _clean_competitors(self, competitors):
@@ -73,7 +72,7 @@ class RelevanceMetricEngine(Engine):
             for info_part in competitor:
                 doc_competitor += info_part
             cleaned_competitor += doc_competitor
-        return self._clean_text(cleaned_competitor)
+        return clean_text(cleaned_competitor)
 
     def _clean_suppliers(self, suppliers):
         cleaned_suppliers = ""
@@ -83,7 +82,7 @@ class RelevanceMetricEngine(Engine):
             for info_part in supplier:
                 doc_supplier += info_part
             cleaned_suppliers += doc_supplier
-        return self._clean_text(cleaned_suppliers)
+        return clean_text(cleaned_suppliers)
 
     def calculate_output_landscape(self):
         output_landscape = self.organization.output_landscape
@@ -100,7 +99,7 @@ class RelevanceMetricEngine(Engine):
         doc_services = ""
         for service in services:
             doc_services += service
-        cleaned_services.extend(self._clean_text(doc_services))
+        cleaned_services.extend(clean_text(doc_services))
         return cleaned_services
 
     def _clean_products(self, products):
@@ -108,7 +107,7 @@ class RelevanceMetricEngine(Engine):
         doc_products = ""
         for product in products:
             doc_products += product
-        cleaned_products.extend(self._clean_text(doc_products))
+        cleaned_products.extend(clean_text(doc_products))
         return cleaned_products
 
     def calculate_transformation_process_landscape(self):
@@ -128,7 +127,7 @@ class RelevanceMetricEngine(Engine):
         doc_information_system = ""
         for information_system in information_systems:
             doc_information_system += information_system
-        cleaned_information_systems.extend(self._clean_text(doc_information_system))
+        cleaned_information_systems.extend(clean_text(doc_information_system))
         return cleaned_information_systems
 
     def _clean_internal_operations(self, internal_operations):
@@ -136,7 +135,7 @@ class RelevanceMetricEngine(Engine):
         doc_operations = ""
         for operation in internal_operations:
             doc_operations += operation
-        cleaned_internal_operations.extend(self._clean_text(doc_operations))
+        cleaned_internal_operations.extend(clean_text(doc_operations))
         return cleaned_internal_operations
 
     def _clean_business_activities(self, business_activities):
@@ -144,36 +143,11 @@ class RelevanceMetricEngine(Engine):
         doc_activities = ""
         for activity in business_activities:
             doc_activities += activity
-        cleaned_business_activities.extend(self._clean_text(doc_activities))
+        cleaned_business_activities.extend(clean_text(doc_activities))
         return cleaned_business_activities
 
-    @staticmethod
-    def _clean_text(text_to_clean):
-        text_data = text_to_clean
-        text_data = text_data.lower()
-        text_data = text_data.split()
-        wl = WordNetLemmatizer()
-        text_data = [wl.lemmatize(word) for word in text_data if not word in set(stopwords.words('english'))]
-        text_data = [re.sub('[^A-Za-z0-9.-]+', '', word) for word in text_data if len(word) > 2]
-        cleaned_text_words = []
-        for word in text_data:
-            if word.endswith('.'):
-                text = word
-                word = text[:text.rfind('.')] + text[text.rfind('.') + 1:]
-                cleaned_text_words.append(word)
-            else:
-                cleaned_text_words.append(word)
-        text_data = [word for word in cleaned_text_words if len(word) > 2]
-        text_data = set(text_data)
-        return text_data
 
-    @staticmethod
-    def _clean_dict(dict_data):
-        text_data = dict_data
-        text_data = text_data.lower().replace('}', '').replace('{', '').replace('"', '').replace('_', ' ').replace('\n',
-                                                                                                                   ' ').replace(
-            '\t', ' ').replace(':', '').replace(',', '')
-        return text_data
+
 
 
 

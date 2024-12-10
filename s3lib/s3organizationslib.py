@@ -1,9 +1,7 @@
 import os, json
 
-from openai import organization
-
 from s3lib.relevance.s3landscapeslib import InputLandscape, TransformationProcessLandscape, OutputLandscape
-
+from s3lib.actionability.s3defencemechanismlib import DefenceMechanism
 
 class Organization:
 
@@ -44,7 +42,6 @@ class OrganizationRelevance(Organization):
         super().__init__(name, config, params, load_from_file)
         self.paths = self._create_paths()
         if load_from_file:
-            print(f"Loading organization {self.name}")
             organization_data=self._load_data(f"{self.paths['organization_path']}\\{self.name}.json")
             print(f"Loading organization {self.name} : Input Landscape")
             self.input_landscape = InputLandscape(self.config, self.params,self.load_from_file,organization_data)
@@ -127,14 +124,29 @@ class OrganizationActionability(Organization):
         self.k_sets=self.params['k_sets']
         self.cti_products_number=self.params['cti_products_number']
         self.products_per_k_set=self.params['products_per_k_set']
-        #print(f"Organization {self.name} has {self.k_sets} defence mechanisms, knowledge base of {self.cti_products_number} cti products , with {self.products_per_k_set} per mechanism")
+        self.knowledge_base_defence_mechanisms={}
+        self.defence_mechanisms={}
         if load_from_file:
-            print(f"Loading organization {self.name}")
+            self.knowledge_base_defence_mechanisms=self._load_data(f"{self.paths['organization_path']}\\{self.name}.json")
+            for k_set in range(self.k_sets):
+                defence_mechanism=DefenceMechanism(config=self.config,name=k_set,number_of_products=self.products_per_k_set)
+                defence_mechanism.set_knowledge_base(self.knowledge_base_defence_mechanisms[k_set])
+                self.defence_mechanisms[k_set]=defence_mechanism
         else:
             print(f"Creating organization {self.name} defence mechanisms")
-            #self._write_organization()
+            for k_set in range(self.k_sets):
+                self.defence_mechanisms[k_set]=DefenceMechanism(config=self.config,name=k_set,number_of_products=self.products_per_k_set)
+            for k_set in range(self.k_sets):
+                self.knowledge_base_defence_mechanisms[k_set]= self.defence_mechanisms[k_set].get_knowledge_base()
+            self._write_organization()
+
+    def _create_paths(self):
+        organization_path = self.config[self.name]
+        return {'organization_path': organization_path}
 
     def _write_organization(self):
+        print(f"Writing organization {self.name} defence mechanisms to file...")
+        self._write_data(f"{self.paths['organization_path']}\\{self.name}.json", self.knowledge_base_defence_mechanisms)
 
-        pass
+
 
