@@ -18,6 +18,6 @@ class Test(TestCase):
                         'landscape_lo', 'landscape_li', 'landscape_ltp', 'industries_choice',
                         'business_activities_choice', 'ac1', 'ac2', 'ac3', 'ac4', 'ac5', 'ac6', 'ac7', 'ac8', 'ac9',
                         'ac10', 'validation_dataset', 'validation_data_number', 'mandiant_key_id',
-                        'mandiant_key_secret', 'reports_path', 'images_path', 'cti_data_path']
+                        'mandiant_key_secret', 'reports_path', 'images_path', 'cti_data_path','rel_results_path','act_results_path','plots_path']
 
         self.assertCountEqual(self.config.keys(), list_of_keys, "Configuration Keys Exist")

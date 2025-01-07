@@ -1,7 +1,7 @@
 from s3lib.s3engineslib import Engine, EngineCore
 from datasketch import MinHash
 from statistics import mean
-from s3lib.s3functions import clean_dict,clean_text
+from s3lib.s3functionslib import clean_dict,clean_text
 
 
 
@@ -9,17 +9,14 @@ class RelevanceMetricEngine(Engine):
 
     def __init__(self,config,target_organization=None, cti_product=None):
         super().__init__(config,target_organization,cti_product)
-        landscapes=[self.calculate_input_landscape(),self.calculate_output_landscape(),self.calculate_transformation_process_landscape()]
+        self.landscapes=[self.calculate_input_landscape(),self.calculate_output_landscape(),self.calculate_transformation_process_landscape()]
 
-        self.engine_core=self.RelevanceMetricCore(self.config,self.product,landscapes)
 
     def _set_organization(self,target_organization):
         self.organization = target_organization
 
-    def _set_product(self,cti_product):
-        self.product = cti_product
-
     def get_metric(self):
+        self.engine_core = self.RelevanceMetricCore(self.config, self.product, self.landscapes)
         return self.engine_core.calculate_metric()
 
     def calculate_input_landscape(self):
@@ -160,14 +157,11 @@ class RelevanceMetricEngine(Engine):
             minhash_list=[]
             for landscape in self.landscapes:
                 minhash_list.append(self._compute_minhash(landscape))
-
-            #TODO minhash CTI
-            #minhash_cti=self._compute_minhash(self.product)
-            #comparison_results_list=[]
-            #for minhash in minhash_list:
-            #    comparison_results_list.append(self._jaccard_similarity(minhash,minhash_cti))
-
-            return mean([1,1,1])
+            minhash_cti=self._compute_minhash(self.product)
+            comparison_results_list=[]
+            for minhash in minhash_list:
+                comparison_results_list.append(self._jaccard_similarity(minhash,minhash_cti))
+            return [mean(comparison_results_list),comparison_results_list]
 
         @staticmethod
         def _compute_minhash(landscape, num_perm=128):
@@ -184,7 +178,7 @@ class RelevanceMetricEngine(Engine):
             return minhash
 
         @staticmethod
-        def _jaccard_similarity(self,minhash1, minhash2):
+        def _jaccard_similarity(minhash1, minhash2):
             """
             Computes the Jaccard similarity between two MinHash objects.
 

@@ -90,6 +90,9 @@ def read_config(filepath="config.ini"):
     ac10 = config.get('experiments', 'ac10')
     validation_dataset = config.get('experiments', 'validation_dataset')
     validation_data_number=config.get('experiments', 'validation_data_number')
+    rel_results_path=config.get('results', 'rel_results_path')
+    act_results_path=config.get('results', 'act_results_path')
+    plots_path=config.get('results', 'plots_path')
     industries_choice = INDUSTRIES
     business_activities_choice = BUSINESS_ACTIVITIES
     # Return a dictionary with the retrieved values
@@ -153,7 +156,9 @@ def read_config(filepath="config.ini"):
         'ac10': ac10,
         'validation_dataset': validation_dataset,
         'validation_data_number': validation_data_number,
-
+        'rel_results_path': rel_results_path,
+        'act_results_path': act_results_path,
+        'plots_path': plots_path
     }
 
     return config_values

@@ -7,6 +7,11 @@ class Engine:
         self.product = product
         self.engine_core =None
 
+    def get_metric(self):
+        pass
+
+    def set_cti_product(self,cti_product):
+        self.product = cti_product
 
 class EngineCore:
     def __init__(self,config,product):

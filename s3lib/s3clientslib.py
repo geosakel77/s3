@@ -17,7 +17,7 @@ import mandiant_threatintel
 from fpdf import FPDF
 from datetime import datetime
 from PyPDF2 import PdfReader
-from s3lib.s3functions import clean_text
+from s3lib.s3functionslib import clean_text
 
 class Client:
     def __init__(self, config):
@@ -41,19 +41,34 @@ class LocalCTIClient(CTIClient):
     def __init__(self, config,cti_data_path='cti_data_path', raw_data_client=True):
         super().__init__(config)
         self.cti_data_path = self.config[cti_data_path]
+        self.extracted_data={}
+        self.cti_data={}
         if raw_data_client:
-            self.reports_paths = self._get_cti_reports()
-            self.reports_data()
+            self.reports_paths = self.get_reports()
+            self.get_reports_data()
+            self.write_reports()
+        else:
+            self.read_cti_data()
 
-    def reports_data(self):
+
+    def get_reports_data(self):
+        count=0
         for filepath in self.reports_paths:
             data =self._extract_pdf_data(filepath)
-            print(data)
             cleaned_data = clean_text(data)
-            print(cleaned_data)
+            key=filepath.split('\\')[-1].split('.')[0]
+            self.extracted_data[key]=cleaned_data
+            count+=1
+            if count%100==0:
+                print(f"Extracted {count} reports")
+
+    def read_cti_data(self):
+        print(f"Reading CTI Data from: {self.cti_data_path}")
+        with open(self.cti_data_path,'r') as f:
+            self.cti_data = json.load(f)
 
 
-    def _get_cti_reports(self):
+    def get_reports(self):
         reports_paths=[]
         for filename in os.listdir(self.reports_path):
             file_path = os.path.join(self.reports_path, filename)
@@ -62,12 +77,19 @@ class LocalCTIClient(CTIClient):
         return reports_paths
 
     def _extract_pdf_data(self,filepath):
-        reader = PdfReader(filepath)
         text = ""
-        for page in reader.pages:
-            text += page.extract_text()
+        try:
+            reader = PdfReader(filepath)
+            for page in reader.pages:
+                text += page.extract_text()
+        except Exception as e:
+            print(f"Error {e} in file {filepath}")
         return text
 
+    def write_reports(self):
+        print(f"Write reports to {self.cti_data_path}")
+        with open(self.cti_data_path, "w") as f:
+            f.write(json.dumps(self.extracted_data))
 
 
 class MandiantCTIClient(CTIClient):

@@ -129,8 +129,9 @@ class OrganizationActionability(Organization):
         if load_from_file:
             self.knowledge_base_defence_mechanisms=self._load_data(f"{self.paths['organization_path']}\\{self.name}.json")
             for k_set in range(self.k_sets):
-                defence_mechanism=DefenceMechanism(config=self.config,name=k_set,number_of_products=self.products_per_k_set)
-                defence_mechanism.set_knowledge_base(self.knowledge_base_defence_mechanisms[k_set])
+                defence_mechanism=DefenceMechanism(config=self.config,name=k_set,number_of_products=self.products_per_k_set,load_from_file=True)
+                # noinspection PyTypeChecker
+                defence_mechanism.set_knowledge_base(self.knowledge_base_defence_mechanisms[str(k_set)])
                 self.defence_mechanisms[k_set]=defence_mechanism
         else:
             print(f"Creating organization {self.name} defence mechanisms")
