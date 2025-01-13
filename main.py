@@ -2,7 +2,7 @@ from config.config import read_config,prepare_relevance_metric_config,prepare_ac
 from s3lib.s3organizationslib import OrganizationRelevance, OrganizationActionability
 from s3lib.relevance.s3relevancelib import RelevanceMetricEngine
 from s3lib.actionability.s3actionabilitylib import ActionabilityMetricEngine
-from s3lib.s3statisticslib import prepare_data,plot_violin
+from s3lib.s3statisticslib import prepare_data_rel,plot_violin,prepare_data_act,plot_products_rel_comparison
 import json,random,os
 
 
@@ -74,11 +74,12 @@ def run_actionability_metric_experiments(config,validation_data):
 def run_statistics(config):
     rel_metric_data=load_data(config['rel_results_path'])
     act_metric_results=load_data(config['act_results_path'])
-    r_org_mean_values, r_org_values_per_landscape, r_org_cti_products_mean_values, r_org_cti_products_values_per_landscape=prepare_data(rel_metric_data)
-    a_org_mean_values, a_org_values_per_defence_mechanism, a_org_cti_products_mean_values, a_org_cti_products_values_per_landscape=prepare_data(act_metric_results)
+    r_org_mean_values, r_org_values_per_landscape, r_org_cti_products_mean_values, r_org_cti_products_values_per_landscape=prepare_data_rel(rel_metric_data)
+    #a_org_mean_values, a_org_values_per_defence_mechanism, a_org_cti_products_mean_values, a_org_cti_products_values_per_landscape=prepare_data_act(act_metric_results)
     #plot_violin(r_org_mean_values)
-    filename= os.path.join(config['plots_path'],'violin_plot_test_metric.png')
-    plot_violin(a_org_mean_values,filename)
+    plot_products_rel_comparison(r_org_cti_products_mean_values)
+    #filename= os.path.join(config['plots_path'],'violin_plot_test_metric.png')
+    #plot_violin(a_org_mean_values,filename)
 
 
 
