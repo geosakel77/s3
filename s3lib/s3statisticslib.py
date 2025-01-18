@@ -1,8 +1,9 @@
+import random
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-from openai import organization
-from stix2validator import print_results
+from statistics import mean
 
 
 def prepare_data_rel(data):
@@ -42,7 +43,7 @@ def prepare_data_act(data):
 
     return org_mean_values_per_product, org_values_per_def_mechanism, org_cti_products_mean_values, org_cti_products_values_per_def_mechanism
 
-def clean_data(data):
+def clean_data(data,min_value=0.005):
     products=[]
     for key in data.keys():
         products= data[key].keys()
@@ -56,7 +57,7 @@ def clean_data(data):
         flag=False
         occur=0
         for key in data.keys():
-            if data[key][pr]>0.00525:
+            if data[key][pr]>=min_value:
                 flag=True
                 occur=occur+1
         if flag and occur>9:
@@ -65,50 +66,109 @@ def clean_data(data):
                 data_cleaned[key1][f"P{counter}"]=data[key1][pr]
     print(len(products))
     print(counter)
-    return data_cleaned
+    return data_cleaned, len(data.keys())
 
+def data_to_dataframe(data_dict_init,metric, min_value,frame_type=1):
+    data=None
+    wrap_val=None
+    if frame_type == 1:
+        data_dict, wrap_val = clean_data(data_dict_init, min_value)
+        data = pd.DataFrame({
+            'Organization': [org for org, values in data_dict.items() for _ in values.items()],
+            'Products': [prd for org, values in data_dict.items() for prd, val in values.items()],
+            metric: [val for org, values in data_dict.items() for prd, val in values.items()],
+        })
+    elif frame_type == 2:
+        if metric == 'Relevance':
+            landscapes=['L1','L2','L3']
+            data_dict, wrap_val = clean_data_ext(data_dict_init, min_value)
+            data = pd.DataFrame({
+                'Organization': [org for org, values in data_dict.items() for prd, val in values.items() for _ in range(len(val))],
+                'Products': [prd for org, values in data_dict.items() for prd, val in values.items() for _ in range(len(val))],
+                'Landscape':[landscapes[i] for org, values in data_dict.items() for prd, val in values.items() for i in range(len(val))],
+                metric: [val[i] for org, values in data_dict.items() for prd, val in values.items() for i in range(len(val))],
+            })
+        elif metric == 'Actionability':
+            data_dict, wrap_val = clean_data_ext(data_dict_init, min_value)
+            key = random.choice(list(data_dict.keys()))
+            print("Selected organisation {}".format(key))
+            data_dict_chosen = data_dict[key]
+            dm_num=None
+            for prd in data_dict[key].keys():
+                dm_num = len(data_dict[key][prd])
+                break
+            def_mec=[]
+            for i in range(dm_num):
+                def_mec.append(f"DF{i}")
 
-def plot_products_rel_comparison(data_dict_init,filename='default',title="Set Diagrams Title"):
-    data_dict=clean_data(data_dict_init)
-    data = pd.DataFrame({
-        'Organization':[org for org, values in data_dict.items() for _ in values.items()],
-        'Products':[prd for org,values in data_dict.items() for prd,val in values.items()],
-        'Relevance':[val for org,values in data_dict.items() for prd,val in values.items()],
-    })
+            data = pd.DataFrame({
+                'Defence Mechanism': [def_mec[i] for prd, values in data_dict_chosen.items() for i in range(len(values))],
+                'Products': [prd for prd, values in data_dict_chosen.items() for _ in range(len(values))],
+                metric: [values[i] for prd, values in data_dict_chosen.items() for i in range(len(values))]
+            })
+            wrap_val=dm_num
+    return data,wrap_val
 
-    graph=sns.FacetGrid(data, col="Organization", aspect=1.5,col_wrap=3)
-    graph.map(sns.scatterplot, "Products", "Relevance")
+def plot_grid(data,col,metric,x_ax,col_wrap,title,filename,aspect=1.5):
+    graph = sns.FacetGrid(data, col=col, hue=metric, aspect=aspect, col_wrap=col_wrap)
+    graph.map(sns.scatterplot, x_ax, metric)
+    graph.set_xticklabels("")
+    #plt.title(title)
+    plt.savefig(filename)
     plt.tight_layout()
     plt.show()
 
-
-
-
-
-def plot_violin(data_dict, filename,title="Set Diagrams Title",):
-    """
-    Plots a violin plot for multiple groups given as a dictionary.
-
-    Parameters:
-    - data_dict: dict
-        A dictionary where keys are group names and values are lists of data points.
-    - title: str
-        Title of the plot (default is "Violin Plot for Groups").
-    """
-    # Convert dictionary to a DataFrame
-    data = pd.DataFrame({
-        'Value': [value for group in data_dict.values() for value in group],
-        'Organizations': [group for group, values in data_dict.items() for _ in values]
-    })
-
-    # Create violin plot
-    plt.figure(figsize=(8, 6))
-    sns.violinplot(x='Organizations', y='Value', data=data,legend=False)
-    plt.title(title, fontsize=14)
-    plt.xlabel('Organizations', fontsize=12)
-    plt.ylabel('Value', fontsize=12)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
+def plot_grid_1(data,col,metric,landscape,x_ax,col_wrap,filename,aspect=1.5):
+    graph = sns.FacetGrid(data, col=col, hue=landscape, aspect=aspect, col_wrap=col_wrap)
+    graph.map(sns.barplot, x_ax, metric,order=['L1','L2','L3'])
+    graph.set_xticklabels("")
     plt.savefig(filename)
+    plt.tight_layout()
     plt.show()
-    plt.close()
 
+def plot_products_metric_comparison(data_dict_init,min_value,metric,filename='default',title="Set Diagrams Title"):
+    data,wrap_val = data_to_dataframe(data_dict_init,metric,min_value=min_value)
+    plot_grid(data,col="Organization",metric=metric,col_wrap=int(wrap_val / 2),title=title,filename=filename,x_ax="Products")
+
+def plot_distributions_violin(data_dict_init,metric,min_value,filename='default',size=1.5,title="Set Diagrams Title"):
+    data, wrap_val =data_to_dataframe(data_dict_init,metric,min_value=min_value)
+    graph = sns.catplot(data,x='Organization', y=metric, kind='violin',inner='box')
+    sns.swarmplot(data,x='Organization', y=metric, color='r',size=size, ax=graph.ax)
+    #plt.title(title)
+    plt.savefig(filename)
+    plt.tight_layout()
+    plt.show()
+
+def clean_data_ext(data,min_value=0.005):
+    products = []
+    for key in data.keys():
+        products = data[key].keys()
+        break
+
+    data_cleaned = {}
+    counter = 0
+    for key in data.keys():
+        data_cleaned[key] = {}
+
+    for pr in products:
+        flag = False
+        occur = 0
+        for key in data.keys():
+            if mean(data[key][pr]) >= min_value:
+                flag = True
+                occur = occur + 1
+        if flag and occur > 9:
+            counter = counter + 1
+            for key1 in data.keys():
+                data_cleaned[key1][f"P{counter}"] = data[key1][pr]
+    print(len(products))
+    print(counter)
+    return data_cleaned, len(data.keys())
+
+
+def plot_bar_distribution(data_dict_init,metric,min_value,frame_type,filename='default',size=1.5,title="Set Diagrams Title",):
+    data, wrap_val =data_to_dataframe(data_dict_init,metric,min_value=min_value,frame_type=frame_type)
+    if metric == 'Relevance':
+        plot_grid_1(data,col="Organization",metric=metric,landscape='Landscape',x_ax='Landscape',col_wrap=int(wrap_val/2),filename=filename)
+    elif metric == 'Actionability':
+        plot_grid(data,col="Defence Mechanism",metric=metric,col_wrap=int(wrap_val / 2),title=title,filename=filename,x_ax="Products")

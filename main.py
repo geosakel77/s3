@@ -2,9 +2,8 @@ from config.config import read_config,prepare_relevance_metric_config,prepare_ac
 from s3lib.s3organizationslib import OrganizationRelevance, OrganizationActionability
 from s3lib.relevance.s3relevancelib import RelevanceMetricEngine
 from s3lib.actionability.s3actionabilitylib import ActionabilityMetricEngine
-from s3lib.s3statisticslib import prepare_data_rel,plot_violin,prepare_data_act,plot_products_rel_comparison
-import json,random,os
-
+from s3lib.s3statisticslib import prepare_data_rel, prepare_data_act, plot_products_metric_comparison,plot_distributions_violin, plot_bar_distribution
+import os, json,random
 
 def write_data(filepath, data):
     with open(filepath, 'w') as f:
@@ -75,15 +74,19 @@ def run_statistics(config):
     rel_metric_data=load_data(config['rel_results_path'])
     act_metric_results=load_data(config['act_results_path'])
     r_org_mean_values, r_org_values_per_landscape, r_org_cti_products_mean_values, r_org_cti_products_values_per_landscape=prepare_data_rel(rel_metric_data)
-    #a_org_mean_values, a_org_values_per_defence_mechanism, a_org_cti_products_mean_values, a_org_cti_products_values_per_landscape=prepare_data_act(act_metric_results)
-    #plot_violin(r_org_mean_values)
-    plot_products_rel_comparison(r_org_cti_products_mean_values)
-    #filename= os.path.join(config['plots_path'],'violin_plot_test_metric.png')
-    #plot_violin(a_org_mean_values,filename)
-
-
-
-
+    a_org_mean_values, a_org_values_per_defence_mechanism, a_org_cti_products_mean_values, a_org_cti_products_values_per_landscape=prepare_data_act(act_metric_results)
+    filename_rel_metric_comparison = os.path.join(config['plots_path'], 'products_rel_comparison.png')
+    plot_products_metric_comparison(r_org_cti_products_mean_values,metric="Relevance",min_value=0.002,filename=filename_rel_metric_comparison)
+    filename_act_metric_comparison = os.path.join(config['plots_path'], 'products_act_metric_comparison.png')
+    plot_products_metric_comparison(a_org_cti_products_mean_values,metric="Actionability",min_value=0.005,filename=filename_act_metric_comparison)
+    filename_violin_rel= os.path.join(config['plots_path'],'violin_plot_distributions_rel.png')
+    plot_distributions_violin(r_org_cti_products_mean_values,"Relevance",min_value=0.0001,filename=filename_violin_rel)
+    filename_violin_act = os.path.join(config['plots_path'], 'violin_plot_distributions_act.png')
+    plot_distributions_violin(a_org_cti_products_mean_values, "Actionability", min_value=0.0001,size=1,filename=filename_violin_act,title="")
+    filename_bar_rel= os.path.join(config['plots_path'], 'bar_plot_distributions_rel.png')
+    plot_bar_distribution(r_org_cti_products_values_per_landscape,"Relevance",min_value=0.002,filename=filename_bar_rel,frame_type=2)
+    filename_bar_act= os.path.join(config['plots_path'], 'bar_plot_distributions_act.png')
+    plot_bar_distribution(a_org_cti_products_values_per_landscape,"Actionability",min_value=0.1,filename=filename_bar_act,frame_type=2)
 
 
 def run():
