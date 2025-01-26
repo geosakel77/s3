@@ -56,6 +56,27 @@ Ensure clarity and replicability.
 
 ### Experimental Workflow
 1. **Data Collection**: Describe the source/type of data used.  
+   - CTI Products Sources: 
+     - [MITRE ATT&CK](https://attack.mitre.org/) 
+     - [CISA KNOWN VULNERABILITIES](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+     - [CVE](https://www.cve.org/)
+     - [ALIENVAULT](https://otx.alienvault.com/dashboard/new)
+     - [FEEDLY](https://feedly.com/i)
+     - [MALPEDIA](https://malpedia.caad.fkie.fraunhofer.de/)
+     - [MISP FEEDS](https://www.misp-project.org/feeds/)
+     - [MITRE ATLAS](https://atlas.mitre.org/)
+     - [TWEETFEED](https://tweetfeed.live/)
+     - [MANDIANT](https://www.mandiant.com/)
+   - Ontologies & Datasets: 
+     - [Big Picture Companies](https://docs.bigpicture.io/docs/free-datasets/companies/)
+     - [FIBO](https://spec.edmcouncil.org/fibo/)
+     - [NACE](https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Glossary:Statistical_classification_of_economic_activities_in_the_European_Community_(NACE))
+     - [DIT](https://rrdg.centr.org/projects/standards/domain-industry-taxonomy/)
+     - [GPO](https://data.ontocommons.linkeddata.es/vocabulary/GeneralProcessOntology(gpo))
+     - [CPE](https://nvd.nist.gov/products/cpe)
+     - [PTO](http://www.productontology.org/)
+     - [ECCF](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/54i)
+   
 2. **Preprocessing**: Specify any filtering, data transformation, or preprocessing steps applied.  
 3. **Modeling/Experiments**: Provide technical details (e.g., equations, algorithms, tools):
     - Models tested with key parameters.

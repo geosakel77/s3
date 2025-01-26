@@ -1,3 +1,21 @@
+"""
+<Cyber Threat Intelligence Relevance and Actionability Quality Metrics Implementation.>
+    Copyright (C) 2025  Georgios Sakellariou
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 C1={"competitors_size": 16, "competitors_industries": 8, "suppliers_size": 12, "suppliers_industries": 2, "number_of_cs_loans": 5, "number_of_cs_funds": 5, "business_activities_choice": 4, "business_activities_size": 18, "number_of_internal_operations": 10, "number_of_information_systems": 18, "number_of_products": 1, "number_of_services": 8}
 C2={"competitors_size": 6, "competitors_industries": 6, "suppliers_size": 12, "suppliers_industries": 5, "number_of_cs_loans": 5, "number_of_cs_funds": 1, "business_activities_choice": 14, "business_activities_size": 8, "number_of_internal_operations": 4, "number_of_information_systems": 18, "number_of_products": 3, "number_of_services": 1}
 C3={"competitors_size": 19, "competitors_industries": 9, "suppliers_size": 14, "suppliers_industries": 5, "number_of_cs_loans": 0, "number_of_cs_funds": 7, "business_activities_choice": 15, "business_activities_size": 12, "number_of_internal_operations": 10, "number_of_information_systems": 15, "number_of_products": 5, "number_of_services": 9}
