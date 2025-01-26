@@ -1,3 +1,20 @@
+"""
+<Cyber Threat Intelligence Relevance and Actionability Quality Metrics Implementation.>
+    Copyright (C) 2025  Georgios Sakellariou
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 INDUSTRIES = {0: 'abrasives and nonmetallic minerals manufacturing', 1: 'accessible architecture and design',
               2: 'accessible hardware manufacturing', 3: 'accommodation and food services', 4: 'accounting',
               5: 'administration of justice', 6: 'administrative and support services', 7: 'advertising services',
