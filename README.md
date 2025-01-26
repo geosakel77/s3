@@ -30,7 +30,7 @@ The goal is to present how those metrics can be implemented and  measured by uti
 
 ## **Objectives**
 
-- To develop teh proposed architecture for the metric measurement.  
+- To develop the proposed architecture for the metric measurement.  
 - To implement the mechanisms that measures the metrics. 
 - To execute a number of experiments in hypothetical organizations.
 
@@ -51,11 +51,15 @@ This project leverages previous work on CTI systems modeling and CTI quality met
 
 ## **Methodology**
 
-Provide a detailed explanation of the methods or experimental approaches used.  
-Ensure clarity and replicability.
+The methodology followed for the calculation of the Relevance metric is described in the following image:
+![Relevance Metric Calculation](images\\relevance_generic_algorithm.png)
+
+The methodology followed for the calculation of the Actionability metric is described in the following image:
+![Actionability Metric Calculation](images\\actionability_generic_algorithm.png)
+
 
 ### Experimental Workflow
-1. **Data Collection**: Describe the source/type of data used.  
+1. **Data Collection**:  
    - CTI Products Sources: 
      - [MITRE ATT&CK](https://attack.mitre.org/) 
      - [CISA KNOWN VULNERABILITIES](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
@@ -76,8 +80,13 @@ Ensure clarity and replicability.
      - [CPE](https://nvd.nist.gov/products/cpe)
      - [PTO](http://www.productontology.org/)
      - [ECCF](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/54i)
-   
-2. **Preprocessing**: Specify any filtering, data transformation, or preprocessing steps applied.  
+   - Datasets Statistics
+
+| Num. of CTI products in dataset | Num. of CTI products in validation dataset | 
+|---------------------------------|--------------------------------------------|
+| 32012                           | 5000                                       |
+
+2. **Preprocessing**: Typical text preprocessing techniques has been applied for the preparation of the data.   
 3. **Modeling/Experiments**: Provide technical details (e.g., equations, algorithms, tools):
     - Models tested with key parameters.
     - Computational frameworks or hardware setup (e.g., HPC systems).
