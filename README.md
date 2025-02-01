@@ -55,7 +55,7 @@ The methodology followed for the calculation of the Relevance metric is describe
 ![Relevance Metric Calculation](images\\relevance_generic_algorithm.png)
 
 The methodology followed for the calculation of the Actionability metric is described in the following image:
-![Actionability Metric Calculation](images\\actionability_generic_algorithm.png)
+![Actionability Metric Calculation](https://github.com/geosakel77/s3/blob/master-1/images/actionability_generic_algorithm.png)
 
 
 ### Experimental Workflow
