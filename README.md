@@ -10,14 +10,10 @@ probabilistic data structures and algorithms.*
 1. [Introduction](#introduction)  
 2. [Objectives](#objectives)  
 3. [Background and Theory](#background-and-theory)  
-4. [Methodology](#methodology)  
-5. [Results](#results)  
-6. [Conclusion and Future Work](#conclusion-and-future-work)  
-7. [Dependencies](#dependencies)  
-8. [Usage](#usage)  
-9. [Contributing](#contributing)  
-10. [Acknowledgments](#acknowledgments)  
-11. [License](#license)  
+4. [Methodology](#methodology)    
+5. [Dependencies](#dependencies)  
+6. [Usage](#usage)
+7. [License](#license)  
 
 ---
 
@@ -30,7 +26,7 @@ The goal is to present how those metrics can be implemented and  measured by uti
 
 ## **Objectives**
 
-- To develop teh proposed architecture for the metric measurement.  
+- To develop the proposed architecture for the metric measurement.  
 - To implement the mechanisms that measures the metrics. 
 - To execute a number of experiments in hypothetical organizations.
 
@@ -51,11 +47,15 @@ This project leverages previous work on CTI systems modeling and CTI quality met
 
 ## **Methodology**
 
-Provide a detailed explanation of the methods or experimental approaches used.  
-Ensure clarity and replicability.
+The methodology followed for the calculation of the Relevance metric is described in the following image:
+![Relevance Metric Calculation](https://github.com/geosakel77/s3/blob/master-1/images/relevance_generic_algorithm.png)
+
+The methodology followed for the calculation of the Actionability metric is described in the following image:
+![Actionability Metric Calculation](https://github.com/geosakel77/s3/blob/master-1/images/actionability_generic_algorithm.png)
+
 
 ### Experimental Workflow
-1. **Data Collection**: Describe the source/type of data used.  
+1. **Data Collection**:  
    - CTI Products Sources: 
      - [MITRE ATT&CK](https://attack.mitre.org/) 
      - [CISA KNOWN VULNERABILITIES](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
@@ -76,44 +76,20 @@ Ensure clarity and replicability.
      - [CPE](https://nvd.nist.gov/products/cpe)
      - [PTO](http://www.productontology.org/)
      - [ECCF](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/54i)
-   
-2. **Preprocessing**: Specify any filtering, data transformation, or preprocessing steps applied.  
-3. **Modeling/Experiments**: Provide technical details (e.g., equations, algorithms, tools):
-    - Models tested with key parameters.
-    - Computational frameworks or hardware setup (e.g., HPC systems).
+   - Datasets Statistics
 
-### Tools and Software
-- Software Environment: Python, MATLAB, R, etc.  
-- Libraries/Frameworks: TensorFlow, PyTorch, NumPy, etc.  
+| Num. of CTI products in dataset | Num. of CTI products in validation dataset | 
+|---------------------------------|--------------------------------------------|
+| 32012                           | 5000                                       |
 
----
+2. **Preprocessing**: Typical text preprocessing techniques has been applied for the preparation of the data.   
+3. **Modeling/Experiments**: The project implements two experimental environments and provides the configuration of an
+OpenCTI Server which has been deployed in the cloud during the execution of the experiments. 
+    - Relevance metric experimental environment.
+![Relevance Metric Experimental Environment](https://github.com/geosakel77/s3/blob/master-1/images/env_rel_metric.png)
+    - Actionability metric experimental environment
+![Actionability Metric Experimental Environment](https://github.com/geosakel77/s3/blob/master-1/images/env_act_metric.png)
 
-## **Results**
-
-Summarize the key findings of the research/work in a methodical manner. Include visualizations if possible.
-
-- **Quantitative Results**: Numerical summaries, tables, or performance metrics.  
-- **Graphs/Figures**: Provide plots, diagrams, or key figures to support the results.
-
-Example:
-| Experiment         | Metric A | Metric B |  
-|--------------------|----------|----------|  
-| Test Case 1        | 92.4%    | 0.874    |  
-| Test Case 2        | 88.1%    | 0.812    |
-
----
-
-## **Conclusion and Future Work**
-
-Conclude the findings and propose follow-up research directions.
-
-- **Summary**: Recap the main results and their implications.  
-- **Future Work**: Outline limitations and suggestions for improvement.  
-
-Example:  
-While the proposed model achieves [result], further work is required to [future goal]. Extending this work to [new application] is a priority for future research.
-
----
 
 ## **Dependencies**
 
@@ -140,11 +116,33 @@ webcolors (24.8.0), win32-setctime (1.1.0), wrapt (1.16.0), XlsxWriter (3.2.0), 
 
 ## **Usage**
 
-- Run setup.py 
-- Run main.py
-
 ### Installation
 1. Clone the repository:  
    ```bash
-   git clone https://github.com/username/project-name.git
-   cd project-name
+   git clone https://github.com/geosakel77/s3.git
+   cd s3
+2. Run the following scripts
+   - Run setup.py 
+   - Run main.py
+
+## **License**
+    
+```markdown
+    
+    Cyber Threat Intelligence Relevance and Actionability Quality Metrics Implementation.
+    Copyright (C) 2025  Georgios Sakellariou
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    
+
